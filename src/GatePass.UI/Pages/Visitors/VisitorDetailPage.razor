@@ -1,0 +1,110 @@
+﻿@page "/visitors/detail/{Id}"
+@using GatePass.Core.PassAggregate
+
+@inject IRepository<Visitor> _repository;
+
+<HeroTitle Title="Visitors" Description="Visitor Details"/>
+
+@if (visitor == null)
+{
+    <p>Not found</p>
+    return;
+}
+
+<MudPaper Class="pa-3">
+    <MudGrid Spacing="2" Justify="Justify.Center">
+        <MudItem sm="4">
+            <MudImage Fluid="true" Src="@visitorPhoto" Class="rounded-lg" Height="180" />
+        </MudItem>
+
+        <MudItem sm="8">
+            <MudGrid Spacing="1">
+                <MudItem xs="6">
+                    <MudGrid Class="flex-column" Spacing="0">
+                        <MudItem>
+                            <MudText Typo="Typo.caption">Full Name</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Typo="Typo.subtitle1">@visitor.FirstName @visitor.LastName</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudGrid Class="flex-column" Spacing="0">
+                        <MudItem>
+                            <MudText Typo="Typo.caption">Phone</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Typo="Typo.subtitle1">@visitor.Phone</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudGrid Class="flex-column" Spacing="0">
+                        <MudItem>
+                            <MudText Typo="Typo.caption">Identification Type</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Typo="Typo.subtitle1">@visitor.IdentificationType</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudGrid Class="flex-column" Spacing="0">
+                        <MudItem>
+                            <MudText Typo="Typo.caption">Identification No</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Typo="Typo.subtitle1">@visitor.IdentificationNo</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudGrid Class="flex-column" Spacing="0">
+                        <MudItem>
+                            <MudText Typo="Typo.caption">Address</MudText>
+                        </MudItem>
+                        <MudItem>
+                            <MudText Typo="Typo.subtitle1">@visitor.Address</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+
+<style type="text/css">
+    .mud-table-head .header-centered th {
+        text-align: center;
+        font-size: 1.2em;
+    }
+
+    .mud-table-foot .bold-text .mud-table-cell {
+        font-weight: 500;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    Visitor? visitor;
+    string? visitorPhoto;
+    List<SinglePass> SiglePasses = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        visitor = await _repository.GetByIdAsync(Guid.Parse(Id));
+
+        if (visitor == null)
+        {
+            _snackbar.Add("No visitor found", Severity.Error);
+            return;
+        }
+
+        visitorPhoto = $"/Photos/{visitor.PhotoName}";
+    }
+
+}

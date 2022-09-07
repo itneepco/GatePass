@@ -1,0 +1,11 @@
+﻿<MudText Typo="Typo.h5" Color="Color.Primary">@Title</MudText>
+<MudText Typo="Typo.subtitle2" Color="Color.Surface" Class="mb-4">@Description</MudText>
+
+@code
+{
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Description { get; set; } = string.Empty;
+}

@@ -1,0 +1,23 @@
+﻿@using System.Net.Http
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using MudBlazor
+
+@using GatePass.UI
+@using GatePass.UI.Data
+@using GatePass.UI.Shared
+@using GatePass.UI.Shared.Components
+
+@using GatePass.SharedKernel.Interfaces
+@using GatePass.Core.LocationAggregate;
+@using GatePass.Core.VisitorAggregate;
+
+@inject NavigationManager _navManager
+@inject IJSRuntime _jsRuntime;
+@inject ISnackbar _snackbar
+@inject IDialogService _dialog;

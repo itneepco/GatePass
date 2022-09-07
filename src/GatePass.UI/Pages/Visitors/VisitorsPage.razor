@@ -1,0 +1,98 @@
+﻿@page "/visitors"
+
+@inject IRepository<Visitor> _repository;
+
+<HeroTitle Title="Visitors" Description="Manage Visitors" />
+
+<MudTable Items="@Visitors"
+          Hover="true"
+          FixedHeader="true"
+          @bind-RowsPerPage="pageSize"
+          @bind-CurrentPage="pageIndex">
+
+    <ToolBarContent>
+        <MudButton OnClick="GoToCreatePage" Variant="Variant.Filled" Color="Color.Primary">Add Visitor</MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="searchString"
+                      Placeholder="Search Visitor by Name or Phone" 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+        <MudButton OnClick="@SearchVisitors" 
+                   Variant="Variant.Filled"
+                   Class="ml-2"
+                   Color="Color.Secondary">Search</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Phone</MudTh>
+        <MudTh>Identification</MudTh>
+        <MudTh>Address</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">
+            <span>@context.FirstName @context.LastName</span>
+        </MudTd>
+        <MudTd DataLabel="Phone">@context.Phone</MudTd>
+        <MudTd DataLabel="Identification">
+            <span>@context.IdentificationType</span>
+            <span>: @context.IdentificationNo</span>
+        </MudTd>
+        <MudTd DataLabel="Address">@context.Address</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+                <MudMenuItem OnClick="_ => GoToDetailPage(context.Id)">Detail</MudMenuItem>
+                <MudMenuItem OnClick="_ => GoToEditPage(context.Id)">Edit</MudMenuItem>
+            </MudMenu>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[]{1,2,3,5,10}"/>
+    </PagerContent>
+</MudTable>
+
+@code {
+    private string searchString = "";
+    int pageSize;
+    int pageIndex;
+
+    private IEnumerable<Visitor> Visitors = new List<Visitor>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResetPagination();
+        await LoadVisitors();
+    }
+
+    async Task LoadVisitors() {
+        var spec = new VisitorsPaginationSpec(pageIndex, pageSize, searchString);
+        Visitors = await _repository.ListAsync(spec);
+    }
+
+    async Task SearchVisitors() {
+        ResetPagination();
+        await LoadVisitors();
+    }
+
+    void ResetPagination() {
+        pageIndex = 0;
+        pageSize = 10;
+    }
+
+    void GoToCreatePage() {
+        var id = Guid.Empty;
+        _navManager.NavigateTo($"/visitors/upsert/{id}");
+    }
+
+    void GoToEditPage(Guid id)
+    {
+        _navManager.NavigateTo($"/visitors/upsert/{id}");
+    }
+
+    void GoToDetailPage(Guid id)
+    {
+        _navManager.NavigateTo($"/visitors/detail/{id}");
+    }
+}

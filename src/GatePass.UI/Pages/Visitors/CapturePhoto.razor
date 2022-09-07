@@ -1,0 +1,35 @@
+﻿<MudDialog>
+    <DialogContent>
+        <video id="videoFeed" width="280" height="220" />
+        <canvas id="currentFrame" width="280" height="220" hidden />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="CaptureFrame">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    MudDialogInstance MudDialog { get; set; }
+
+    void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await _jsRuntime.InvokeVoidAsync("startVideo", "videoFeed");
+    }
+
+    private async Task CaptureFrame()
+    {
+        await _jsRuntime.InvokeAsync<string>("getFrame", "videoFeed", "currentFrame", DotNetObjectReference.Create(this));
+    }
+
+    [JSInvokable]
+    public void ProcessImage(string imageString)
+    {
+        //var imageData = Convert.FromBase64String(imageString.Split(',')[1]);
+        MudDialog.Close(DialogResult.Ok(imageString));
+        MudDialog.Close(DialogResult.Ok(imageString));
+    }
+}

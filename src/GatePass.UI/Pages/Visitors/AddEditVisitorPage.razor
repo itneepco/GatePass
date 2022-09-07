@@ -1,0 +1,192 @@
+﻿@page "/visitors/upsert/{Id}"
+
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+
+@inject IRepository<Visitor> _repo
+@inject IWebHostEnvironment _env
+
+<HeroTitle Title="Visitors" Description="@title" />
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="8">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Phone No"
+                                  @bind-Value="model.Phone"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Phone)" />
+
+                    <MudTextField Label="First Name"
+                                  @bind-Value="model.FirstName"
+                                  For="@(() => model.FirstName)"
+                                  Variant="Variant.Outlined" Class="mt-3" />
+
+                    <MudTextField Label="Last Name"
+                                  @bind-Value="model.LastName"
+                                  For="@(() => model.LastName)"
+                                  Variant="Variant.Outlined" Class="mt-3" />
+
+                    <MudSelect Label="Identification Type"
+                               @bind-Value="model.IdentificationType"
+                               For="@(() => model.IdentificationType)"
+                               Variant="Variant.Outlined" Class="mt-4"
+                               AnchorOrigin="Origin.BottomCenter">
+
+                        @foreach (var item in IdentificationType.List.OrderBy(p => p.Value))
+                        {
+                            <MudSelectItem Value="@item">@item.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudTextField Label="Identification No"
+                                  @bind-Value="model.IdentificationNo"
+                                  For="@(() => model.IdentificationNo)"
+                                  Variant="Variant.Outlined" Class="mt-3" />
+
+                    <MudTextField Label="Address"
+                                  Lines="3"
+                                  @bind-Value="model.Address"
+                                  For="@(() => model.Address)"
+                                  Variant="Variant.Outlined" Class="mt-3" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudPaper Class="pa-4 d-flex flex-column align-center gap-3">
+                <MudImage Src="@imageData" Elevation="25" Class="rounded-lg" Fluid="true" />
+
+                <MudButton StartIcon="@Icons.Material.Filled.PhotoCamera"
+                           @onclick="OnCapturePhoto"
+                           Variant="Variant.Filled"
+                           Color="Color.Secondary">Capture Photo</MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    VisitorFormDto model = new VisitorFormDto();
+
+    Visitor? visitor;
+    string imageData = string.Empty;
+
+    string title = "Add Visitor";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Guid.Parse(Id) != Guid.Empty)
+        {
+            title = "Edit Visitor";
+
+            visitor = await _repo.GetByIdAsync(Guid.Parse(Id));
+            if (visitor == null)
+            {
+                _snackbar.Add("Cannot find visitor in the database");
+                return;
+            }
+
+            model.FirstName = visitor.FirstName;
+            model.LastName = visitor.LastName;
+            model.Phone = visitor.Phone;
+            model.IdentificationType = visitor.IdentificationType;
+            model.IdentificationNo = visitor.IdentificationNo;
+            model.Address = visitor.Address;
+
+            Byte[] bytes = File.ReadAllBytes(Path.Combine(_env.WebRootPath, "photos", visitor.PhotoName!));
+            imageData = $"data:image/*;base64,{Convert.ToBase64String(bytes)}";
+        }
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        if (string.IsNullOrEmpty(imageData))
+        {
+            _snackbar.Add("Please click visitor photo", Severity.Error);
+            return;
+        }
+
+        if (Guid.Parse(Id) != Guid.Empty)
+        {
+            await UpdateVisitor();
+        }
+        else
+        {
+            await CreateVisitor();
+        }
+    }
+
+    async Task CreateVisitor() {
+        var fileName = Guid.NewGuid() + ".jpg";
+        var filePath = Path.Combine(_env.WebRootPath, "photos", fileName);
+        await File.WriteAllBytesAsync(filePath, Convert.FromBase64String(imageData.Split(',')[1]));
+
+        var newVisitor = new Visitor(
+                firstName: model.FirstName,
+                lastName: model.LastName,
+                phone: model.Phone,
+                identificationType: model.IdentificationType,
+                identificationNo: model.IdentificationNo,
+                address: model.Address
+            );
+        newVisitor.SetPhotoName(fileName);
+
+        await _repo.AddAsync(newVisitor);
+        await _repo.SaveChangesAsync();
+
+        _snackbar.Add("Created Visitor Successfully", Severity.Success);
+
+        GoToDetailPage(newVisitor.Id);
+    }
+
+    async Task UpdateVisitor() {
+        if (visitor == null) return;
+
+        var filePath = Path.Combine(_env.WebRootPath, "photos", visitor.PhotoName!);
+        await File.WriteAllBytesAsync(filePath, Convert.FromBase64String(imageData.Split(',')[1]));
+
+        var visitorDb = await _repo.GetByIdAsync(Guid.Parse(Id));
+        if (visitorDb == null)
+        {
+            _snackbar.Add("Cannot find visitor in the database");
+            return;
+        }
+
+        visitorDb.SetFirstName(model.FirstName);
+        visitorDb.SetLastName(model.LastName);
+        visitorDb.SetPhone(model.Phone);
+        visitorDb.SetIdentificationType(model.IdentificationType);
+        visitorDb.SetIdentificationNo(model.IdentificationNo);
+
+        await _repo.SaveChangesAsync();
+        _snackbar.Add("Updated Visitor Successfully", Severity.Success);
+
+        GoToDetailPage(visitorDb.Id);
+    }
+
+    async Task OnCapturePhoto()
+    {
+        var options = new DialogOptions() { DisableBackdropClick = true, Position = DialogPosition.TopCenter };
+        var dialog = _dialog.Show<CapturePhoto>("Capture Visitor Photo", options);
+
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            imageData = (string)result.Data;
+        }
+    }
+
+    void GoToDetailPage(Guid id) {
+        _navManager.NavigateTo($"visitors/detail/{id}");
+    }
+}
