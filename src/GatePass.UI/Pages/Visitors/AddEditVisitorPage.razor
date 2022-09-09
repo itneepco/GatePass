@@ -102,8 +102,10 @@
             model.IdentificationNo = visitor.IdentificationNo;
             model.Address = visitor.Address;
 
-            Byte[] bytes = File.ReadAllBytes(Path.Combine(_env.WebRootPath, "photos", visitor.PhotoName!));
-            imageData = $"data:image/*;base64,{Convert.ToBase64String(bytes)}";
+            if(!String.IsNullOrEmpty(visitor.PhotoName)) {
+                Byte[] bytes = File.ReadAllBytes(Path.Combine(_env.WebRootPath, "photos", visitor.PhotoName!));
+                imageData = $"data:image/*;base64,{Convert.ToBase64String(bytes)}";
+            }
         }
     }
 
@@ -115,21 +117,21 @@
             return;
         }
 
-        if (Guid.Parse(Id) != Guid.Empty)
-        {
-            await UpdateVisitor();
-        }
-        else
-        {
-            await CreateVisitor();
-        }
-    }
-
-    async Task CreateVisitor() {
-        var fileName = Guid.NewGuid() + ".jpg";
+        var fileName = visitor?.PhotoName ?? Guid.NewGuid() + ".jpg";
         var filePath = Path.Combine(_env.WebRootPath, "photos", fileName);
         await File.WriteAllBytesAsync(filePath, Convert.FromBase64String(imageData.Split(',')[1]));
 
+        if (Guid.Parse(Id) != Guid.Empty)
+        {
+            await UpdateVisitor(fileName);
+        }
+        else
+        {
+            await CreateVisitor(fileName);
+        }
+    }
+
+    async Task CreateVisitor(string fileName) {
         var newVisitor = new Visitor(
                 firstName: model.FirstName,
                 lastName: model.LastName,
@@ -148,12 +150,7 @@
         GoToDetailPage(newVisitor.Id);
     }
 
-    async Task UpdateVisitor() {
-        if (visitor == null) return;
-
-        var filePath = Path.Combine(_env.WebRootPath, "photos", visitor.PhotoName!);
-        await File.WriteAllBytesAsync(filePath, Convert.FromBase64String(imageData.Split(',')[1]));
-
+    async Task UpdateVisitor(string fileName) {
         var visitorDb = await _repo.GetByIdAsync(Guid.Parse(Id));
         if (visitorDb == null)
         {
@@ -166,6 +163,7 @@
         visitorDb.SetPhone(model.Phone);
         visitorDb.SetIdentificationType(model.IdentificationType);
         visitorDb.SetIdentificationNo(model.IdentificationNo);
+        visitorDb.SetPhotoName(fileName);
 
         await _repo.SaveChangesAsync();
         _snackbar.Add("Updated Visitor Successfully", Severity.Success);

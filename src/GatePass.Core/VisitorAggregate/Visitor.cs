@@ -1,4 +1,5 @@
 ﻿using Ardalis.GuardClauses;
+using GatePass.Core.PassAggregate;
 using GatePass.SharedKernel;
 using GatePass.SharedKernel.Interfaces;
 

@@ -4,11 +4,11 @@
 
 <HeroTitle Title="Visitors" Description="Manage Visitors" />
 
-<MudTable Items="@Visitors"
+<MudTable ServerData="@(new Func<TableState, Task<TableData<Visitor>>>(ServerReload))"
           Hover="true"
-          FixedHeader="true"
-          @bind-RowsPerPage="pageSize"
-          @bind-CurrentPage="pageIndex">
+          @ref="table"
+          @bind-CurrentPage="pageIndex"
+          FixedHeader="true">
 
     <ToolBarContent>
         <MudButton OnClick="GoToCreatePage" Variant="Variant.Filled" Color="Color.Primary">Add Visitor</MudButton>
@@ -55,30 +55,23 @@
 
 @code {
     private string searchString = "";
-    int pageSize;
-    int pageIndex;
+    int pageIndex = 0;
 
-    private IEnumerable<Visitor> Visitors = new List<Visitor>();
+    private MudTable<Visitor>? table;
 
-    protected override async Task OnInitializedAsync()
-    {
-        ResetPagination();
-        await LoadVisitors();
+    private async Task<TableData<Visitor>> ServerReload(TableState state) {
+        var spec = new VisitorsPaginationSpec(state.Page, state.PageSize, searchString);
+
+        var visitors = await _repository.ListAsync(spec);
+        var totalCount = await _repository.CountAsync();
+
+        return new TableData<Visitor>() { TotalItems = totalCount, Items = visitors };
     }
 
-    async Task LoadVisitors() {
-        var spec = new VisitorsPaginationSpec(pageIndex, pageSize, searchString);
-        Visitors = await _repository.ListAsync(spec);
-    }
-
-    async Task SearchVisitors() {
-        ResetPagination();
-        await LoadVisitors();
-    }
-
-    void ResetPagination() {
+    void SearchVisitors() {
         pageIndex = 0;
-        pageSize = 10;
+
+        table?.ReloadServerData();
     }
 
     void GoToCreatePage() {

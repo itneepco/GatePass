@@ -1,7 +1,9 @@
 ﻿@page "/visitors/detail/{Id}"
 @using GatePass.Core.PassAggregate
+@using GatePass.Core.PassAggregate.Specifications
 
-@inject IRepository<Visitor> _repository;
+@inject IRepository<Visitor> _visitorRepo;
+@inject IRepository<SinglePass> _singlePassRepo;
 
 <HeroTitle Title="Visitors" Description="Visitor Details"/>
 
@@ -11,7 +13,7 @@
     return;
 }
 
-<MudPaper Class="pa-3">
+<MudPaper Class="pa-3 mb-6">
     <MudGrid Spacing="2" Justify="Justify.Center">
         <MudItem sm="4">
             <MudImage Fluid="true" Src="@visitorPhoto" Class="rounded-lg" Height="180" />
@@ -69,22 +71,44 @@
                         </MudItem>
                     </MudGrid>
                 </MudItem>
+                <MudItem>
+                    <MudButton Href="@editUrl" Color="Color.Secondary" Variant="Variant.Outlined">Edit</MudButton>
+                </MudItem>
             </MudGrid>
         </MudItem>
     </MudGrid>
 </MudPaper>
 
-
-<style type="text/css">
-    .mud-table-head .header-centered th {
-        text-align: center;
-        font-size: 1.2em;
-    }
-
-    .mud-table-foot .bold-text .mud-table-cell {
-        font-weight: 500;
-    }
-</style>
+<MudTabs PanelClass="pt-4">
+    <MudTabPanel Text="Single Pass">
+        <MudTable ServerData="@(new Func<TableState, Task<TableData<SinglePass>>>(ReloadSinglePasses))"
+                  Hover="true">
+            <ToolBarContent>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Officer To Visit</MudTh>
+                <MudTh>Department</MudTh>
+                <MudTh>Purpose</MudTh>
+                <MudTh>In Time</MudTh>
+                <MudTh>Out Time</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Officer To Visit">@context.OfficerToVisit</MudTd>
+                <MudTd DataLabel="Department">@context.Department</MudTd>
+                <MudTd DataLabel="Purpose">@context.Purpose</MudTd>
+                <MudTd DataLabel="In Time">@context.InTime</MudTd>
+                <MudTd DataLabel="Out Time">@context.OutTime</MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudTabPanel>
+    <MudTabPanel Text="Multiple Pass">
+        <MudText>Content Two</MudText>
+    </MudTabPanel>
+</MudTabs>
 
 @code {
     [Parameter]
@@ -92,11 +116,11 @@
 
     Visitor? visitor;
     string? visitorPhoto;
-    List<SinglePass> SiglePasses = new();
+    string? editUrl;
 
     protected override async Task OnParametersSetAsync()
     {
-        visitor = await _repository.GetByIdAsync(Guid.Parse(Id));
+        visitor = await _visitorRepo.GetByIdAsync(Guid.Parse(Id));
 
         if (visitor == null)
         {
@@ -105,6 +129,16 @@
         }
 
         visitorPhoto = $"/Photos/{visitor.PhotoName}";
+        editUrl = $"visitors/upsert/{visitor.Id}";
     }
 
+
+    async Task<TableData<SinglePass>> ReloadSinglePasses(TableState state)
+    {
+        var spec = new SinglePassByVisitorIdPaginationSpec(state.Page, state.PageSize, Guid.Parse(Id));
+        var singlePasses = await _singlePassRepo.ListAsync(spec);
+        var totalCount = await _singlePassRepo.CountAsync();
+
+        return new TableData<SinglePass>() { TotalItems = totalCount, Items = singlePasses };
+    }
 }
