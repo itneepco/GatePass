@@ -1,18 +1,153 @@
-﻿@using MudBlazor
+﻿@using GatePass.Core.PassAggregate
 
-<MudDialog>
-    <DialogContent>
-        Dialog Content
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
-    </DialogActions>
-</MudDialog>
+@inject IRepository<SinglePass> _repo;
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmitAsync" class="pb-3">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid Spacing="1">
+                <MudItem xs="12">
+                    <MudDatePicker Label="Visit Date"
+                                   @bind-Date="model.VisitDate"
+                                   Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTimePicker Label="In Time"
+                                   AmPm="true"
+                                   @bind-Time="@model.InTime"
+                                   Variant="Variant.Outlined" />
+                </MudItem>
+                
+                @if(SinglePass != null) {
+                    <MudItem xs="12">
+                        <MudTimePicker Label="Out Time"
+                                   AmPm="true"
+                                   @bind-Time="@model.OutTime"
+                                   Variant="Variant.Outlined" />
+                    </MudItem>
+                }
+                
+                <MudItem xs="12">
+                    <MudTextField Label="Officer To Visit"
+                                  @bind-Value="model.OfficerToVisit"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.OfficerToVisit)" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField Label="Department"
+                                  @bind-Value="model.Department"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Department)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Purpose"
+                                  @bind-Value="model.Purpose"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Purpose)" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudNumericField Label="No of companions"
+                                     @bind-Value="model.NoOfCompanions"
+                                     Variant="Variant.Outlined"
+                                     Min="0" Max="10" />
+                </MudItem>
+            </MudGrid>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Ok</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
 
-    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    [Parameter] public Guid VisitorId { get; set; }
+    [Parameter] public SinglePass SinglePass { get; set; }
+
+    SinglePassFormDto model = new();
+
     void Cancel() => MudDialog.Cancel();
+
+    protected override void OnParametersSet()
+    {
+        model = new();
+
+        if (SinglePass != null)
+        {
+            model.OfficerToVisit = SinglePass.OfficerToVisit;
+            model.Department = SinglePass.Department;
+            model.Purpose = SinglePass.Purpose;
+            model.NoOfCompanions = SinglePass.NoOfCompanions;
+            model.InTime = SinglePass.InTime;
+            model.VisitDate = SinglePass.VisitDate;
+            model.OutTime = DateTime.Now.TimeOfDay;
+        }
+    }
+
+    async Task OnValidSubmitAsync(EditContext context)
+    {
+        if (!model.VisitDate.HasValue || !model.InTime.HasValue)
+        {
+            _snackbar.Add("Please select date and in time", Severity.Warning);
+            return;
+        }
+
+        if (SinglePass == null)
+        {
+            await CreateSinglePass();
+        }
+        else
+        {
+            if (!model.OutTime.HasValue)
+            {
+                _snackbar.Add("Please select out time", Severity.Warning);
+                return;
+            }
+
+            await UpdateSinglePass();
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    async Task CreateSinglePass() {
+        await _repo.AddAsync(new SinglePass(
+                visitorId: VisitorId,
+                visitDate: model.VisitDate.Value,
+                inTime: model.InTime.Value,
+                purpose: model.Purpose,
+                officerToVisit: model.OfficerToVisit,
+                department: model.Department,
+                noOfCompanions: model.NoOfCompanions
+            ));
+
+         await _repo.SaveChangesAsync();
+        _snackbar.Add("Successfully created visitor single pass", Severity.Success);
+    }
+
+    async Task UpdateSinglePass() {
+        var singlePassDb = await _repo.GetByIdAsync(SinglePass.Id);
+        if (singlePassDb == null)
+        {
+            _snackbar.Add("Cannot find single pass in the database");
+            return;
+        }
+        singlePassDb.SetPurpose(model.Purpose);
+        singlePassDb.SetNoOfCompanions(model.NoOfCompanions);
+        singlePassDb.SetOfficerToVisit(model.OfficerToVisit);
+        singlePassDb.SetDepartment(model.Department);
+
+        singlePassDb.SetVisitDate(model.VisitDate.Value);
+        singlePassDb.SetInTime(model.InTime.Value);
+        singlePassDb.SetOutTime(model.OutTime.Value);
+
+        await _repo.SaveChangesAsync();
+        _snackbar.Add("Successfully saved visitor single pass", Severity.Success);
+    }
 }

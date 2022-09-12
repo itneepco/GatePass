@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -67,8 +66,8 @@ namespace GatePass.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     VisitDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    InTime = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    OutTime = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    InTime = table.Column<TimeSpan>(type: "TEXT", nullable: false),
+                    OutTime = table.Column<TimeSpan>(type: "TEXT", nullable: false),
                     Purpose = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
                     OfficerToVisit = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     Department = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),

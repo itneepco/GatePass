@@ -76,7 +76,7 @@ namespace GatePass.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("InTime")
+                    b.Property<TimeSpan>("InTime")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("NoOfCompanions")
@@ -87,7 +87,7 @@ namespace GatePass.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OutTime")
+                    b.Property<TimeSpan>("OutTime")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Purpose")

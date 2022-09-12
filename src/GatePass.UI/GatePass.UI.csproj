@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Pages\Visitors\SinglePassFormModal.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.8">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,19 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Logs\" />
     <Folder Include="wwwroot\photos\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <UpToDateCheckInput Remove="Pages\Visitors\SinglePassFormModal.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Pages\Visitors\SinglePassFormModal.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Pages\Visitors\SinglePassFormModal.razor" />
   </ItemGroup>
 
 </Project>

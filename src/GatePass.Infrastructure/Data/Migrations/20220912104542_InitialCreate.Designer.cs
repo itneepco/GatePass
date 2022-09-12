@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GatePass.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20220902052010_InitialCreate")]
+    [Migration("20220912104542_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -78,7 +78,7 @@ namespace GatePass.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("InTime")
+                    b.Property<TimeSpan>("InTime")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("NoOfCompanions")
@@ -89,7 +89,7 @@ namespace GatePass.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OutTime")
+                    b.Property<TimeSpan>("OutTime")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Purpose")

@@ -82,23 +82,33 @@
 <MudTabs PanelClass="pt-4">
     <MudTabPanel Text="Single Pass">
         <MudTable ServerData="@(new Func<TableState, Task<TableData<SinglePass>>>(ReloadSinglePasses))"
+                  @ref="table"
                   Hover="true">
             <ToolBarContent>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
+                <MudButton OnClick="() => OpenSinglePassModal()" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
             </ToolBarContent>
             <HeaderContent>
+                <MudTh>Visit Date</MudTh>
                 <MudTh>Officer To Visit</MudTh>
                 <MudTh>Department</MudTh>
                 <MudTh>Purpose</MudTh>
                 <MudTh>In Time</MudTh>
                 <MudTh>Out Time</MudTh>
+                <MudTh>Actions</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd DataLabel="Visit Date">@context.VisitDate.ToShortDateString()</MudTd>
                 <MudTd DataLabel="Officer To Visit">@context.OfficerToVisit</MudTd>
                 <MudTd DataLabel="Department">@context.Department</MudTd>
                 <MudTd DataLabel="Purpose">@context.Purpose</MudTd>
-                <MudTd DataLabel="In Time">@context.InTime</MudTd>
-                <MudTd DataLabel="Out Time">@context.OutTime</MudTd>
+                <MudTd DataLabel="In Time">@context.InTime.ToString(@"hh\:mm")</MudTd>
+                <MudTd DataLabel="Out Time">@context.OutTime.ToString(@"hh\:mm")</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+                        <MudMenuItem OnClick="_ => OnEditPass(context)">Edit Pass</MudMenuItem>
+                        <MudMenuItem OnClick="_ => OnPrintPass(context)">Print Pass</MudMenuItem>
+                    </MudMenu>
+                </MudTd>
             </RowTemplate>
             <PagerContent>
                 <MudTablePager />
@@ -114,6 +124,7 @@
     [Parameter]
     public string Id { get; set; } = string.Empty;
 
+    MudTable<SinglePass> table;
     Visitor? visitor;
     string? visitorPhoto;
     string? editUrl;
@@ -140,5 +151,36 @@
         var totalCount = await _singlePassRepo.CountAsync();
 
         return new TableData<SinglePass>() { TotalItems = totalCount, Items = singlePasses };
+    }
+
+    async Task OpenSinglePassModal(SinglePass pass = null) {
+        var options = new DialogOptions() { 
+            DisableBackdropClick = true, 
+            Position = DialogPosition.TopCenter,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Small
+        };
+
+        var parameters = new DialogParameters();
+
+        parameters.Add("VisitorId", visitor!.Id);
+        parameters.Add("SinglePass", pass);
+
+        var dialog = _dialog.Show<SinglePassFormModal>("Single Pass Entry", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            await table.ReloadServerData();
+        }
+    }
+
+    async Task OnEditPass(SinglePass singlePass) {
+        await OpenSinglePassModal(singlePass);
+    }
+
+    void OnPrintPass(SinglePass singlePass) {
+
     }
 }
