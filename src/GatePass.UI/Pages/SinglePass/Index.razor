@@ -1,0 +1,95 @@
+﻿@page "/singlepass"
+
+@using GatePass.Core.PassAggregate
+@using GatePass.Core.PassAggregate.Specifications
+@inject IReadRepository<SinglePass> _repo;
+
+<HeroTitle Title="Single Pass" Description="Manage Single / Day Pass" />
+
+<MudTable ServerData="@(new Func<TableState, Task<TableData<SinglePass>>>(ReloadSinglePasses))"
+          @ref="table"
+          @bind-CurrentPage="pageIndex"
+          Hover="true">
+    <ToolBarContent>
+        <MudButton OnClick="() => AddSinglePass()" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="searchString"
+                      Placeholder="Search by officer or department to visit"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+        <MudButton OnClick="@SearchVisitors"
+                   Variant="Variant.Filled"
+                   Class="ml-2"
+                   Color="Color.Secondary">Search</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Visitor Photo</MudTh>
+        <MudTh>Visitor Name</MudTh>
+        <MudTh>Visit Date</MudTh>
+        <MudTh>Officer To Visit</MudTh>
+        <MudTh>Department</MudTh>
+        <MudTh>In Time</MudTh>
+        <MudTh>Out Time</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Visitor Photo">
+            <MudImage Fluid="true" Width="80" Height="60"
+                      Src="@GetPhotoUrl(context.Visitor?.PhotoName)" 
+                      Class="rounded-lg" />
+        </MudTd>
+        <MudTd DataLabel="Visitor Name">
+            <span>@context.Visitor?.FirstName @context.Visitor?.LastName</span>
+        </MudTd>
+        <MudTd DataLabel="Visit Date">@context.VisitDate.ToShortDateString()</MudTd>
+        <MudTd DataLabel="Officer To Visit">@context.OfficerToVisit</MudTd>
+        <MudTd DataLabel="Department">@context.Department</MudTd>
+        <MudTd DataLabel="In Time">@context.InTime.ToString(@"hh\:mm")</MudTd>
+        <MudTd DataLabel="Out Time">@context.OutTime.ToString(@"hh\:mm")</MudTd>
+        <MudTd DataLabel="Actions">
+            <SinglePassAction SinglePass="@context" OnPassUpdate="ReloadTable" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    int pageIndex;
+    MudTable<SinglePass>? table;
+    string searchString = string.Empty;
+
+    async Task<TableData<SinglePass>> ReloadSinglePasses(TableState state)
+    {
+        var spec = new SinglePassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
+        var singlePasses = await _repo.ListAsync(spec);
+        var totalCount = await _repo.CountAsync();
+
+        return new TableData<SinglePass>() { TotalItems = totalCount, Items = singlePasses };
+    }
+
+    void SearchVisitors() {
+        pageIndex = 0;
+
+        ReloadTable();
+    }
+
+    void AddSinglePass() {
+
+    }
+
+    void ReloadTable() {
+        table?.ReloadServerData();
+    }
+
+    string GetPhotoUrl(string? photoName) {
+        if(String.IsNullOrEmpty(photoName)) {
+            return "photos/placeholder.jpeg";
+        }
+
+        return $"photos/{photoName}";
+    }
+}

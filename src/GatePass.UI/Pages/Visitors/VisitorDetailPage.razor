@@ -85,7 +85,7 @@
                   @ref="table"
                   Hover="true">
             <ToolBarContent>
-                <MudButton OnClick="() => OpenSinglePassModal()" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
+                <MudButton OnClick="OnCreateSinglePass" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Visit Date</MudTh>
@@ -104,10 +104,7 @@
                 <MudTd DataLabel="In Time">@context.InTime.ToString(@"hh\:mm")</MudTd>
                 <MudTd DataLabel="Out Time">@context.OutTime.ToString(@"hh\:mm")</MudTd>
                 <MudTd DataLabel="Actions">
-                    <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
-                        <MudMenuItem OnClick="_ => OnEditPass(context)">Edit Pass</MudMenuItem>
-                        <MudMenuItem OnClick="_ => OnPrintPass(context)">Print Pass</MudMenuItem>
-                    </MudMenu>
+                    <SinglePassAction SinglePass="@context" OnPassUpdate="ReloadTable" />
                 </MudTd>
             </RowTemplate>
             <PagerContent>
@@ -124,7 +121,7 @@
     [Parameter]
     public string Id { get; set; } = string.Empty;
 
-    MudTable<SinglePass> table;
+    MudTable<SinglePass>? table;
     Visitor? visitor;
     string? visitorPhoto;
     string? editUrl;
@@ -153,7 +150,8 @@
         return new TableData<SinglePass>() { TotalItems = totalCount, Items = singlePasses };
     }
 
-    async Task OpenSinglePassModal(SinglePass pass = null) {
+    async Task OnCreateSinglePass()
+    {
         var options = new DialogOptions() { 
             DisableBackdropClick = true, 
             Position = DialogPosition.TopCenter,
@@ -162,25 +160,20 @@
         };
 
         var parameters = new DialogParameters();
-
         parameters.Add("VisitorId", visitor!.Id);
-        parameters.Add("SinglePass", pass);
 
-        var dialog = _dialog.Show<SinglePassFormModal>("Single Pass Entry", parameters, options);
+        var dialog = _dialog.Show<SinglePassFormModal>("Create Single Pass Entry", parameters, options);
 
         var result = await dialog.Result;
 
         if (!result.Cancelled)
         {
-            await table.ReloadServerData();
+            ReloadTable();
         }
     }
 
-    async Task OnEditPass(SinglePass singlePass) {
-        await OpenSinglePassModal(singlePass);
-    }
-
-    void OnPrintPass(SinglePass singlePass) {
-
+    void ReloadTable()
+    {
+        table?.ReloadServerData();
     }
 }

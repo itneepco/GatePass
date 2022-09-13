@@ -7,6 +7,7 @@ namespace GatePass.Core.PassAggregate.Specifications
         public SinglePassByVisitorIdPaginationSpec(int pageIndex, int pageSize, Guid visitorId)
         {
             Query
+                .OrderByDescending(p => p.VisitDate)
                 .Where(p => p.VisitorId == visitorId)
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize);

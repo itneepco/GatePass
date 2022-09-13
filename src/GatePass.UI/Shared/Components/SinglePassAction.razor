@@ -1,0 +1,48 @@
+﻿@using GatePass.Core.PassAggregate
+@using GatePass.UI.Pages.Visitors
+
+<MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+    <MudMenuItem OnClick="_ => OnEditPass()">Edit Pass</MudMenuItem>
+    <MudMenuItem OnClick="_ => OnPrintPass()">Print Pass</MudMenuItem>
+</MudMenu>
+
+@code {
+    [Parameter, EditorRequired] 
+    public SinglePass SinglePass { get; set; } = new();
+
+    [Parameter, EditorRequired] 
+    public EventCallback<bool> OnPassUpdate {get; set; } 
+
+    async Task OpenSinglePassModal(bool edit)
+    {
+        var options = new DialogOptions()
+            {
+                DisableBackdropClick = true,
+                Position = DialogPosition.TopCenter,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small
+            };
+
+        var parameters = new DialogParameters();
+        parameters.Add("SinglePass", SinglePass);
+
+        var dialog = _dialog.Show<SinglePassFormModal>("Edit Single Pass Entry", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            await OnPassUpdate.InvokeAsync();
+        }
+    }
+
+    async Task OnEditPass()
+    {
+        await OpenSinglePassModal(edit: true);
+    }
+
+    void OnPrintPass()
+    {
+
+    }
+}
