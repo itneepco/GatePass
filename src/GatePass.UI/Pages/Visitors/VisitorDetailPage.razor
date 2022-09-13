@@ -1,9 +1,8 @@
 ﻿@page "/visitors/detail/{Id}"
-@using GatePass.Core.PassAggregate
-@using GatePass.Core.PassAggregate.Specifications
 
-@inject IRepository<Visitor> _visitorRepo;
-@inject IRepository<SinglePass> _singlePassRepo;
+@inject IReadRepository<Visitor> _visitorRepo;
+@inject IReadRepository<SinglePass> _singlePassRepo;
+@inject IReadRepository<MultiplePass> _multiPassRepo;
 
 <HeroTitle Title="Visitors" Description="Visitor Details"/>
 
@@ -82,10 +81,12 @@
 <MudTabs PanelClass="pt-4">
     <MudTabPanel Text="Single Pass">
         <MudTable ServerData="@(new Func<TableState, Task<TableData<SinglePass>>>(ReloadSinglePasses))"
-                  @ref="table"
+                  @ref="singlePassTable"
                   Hover="true">
             <ToolBarContent>
-                <MudButton OnClick="OnCreateSinglePass" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
+                <MudButton OnClick="OnCreateSinglePass"
+                           Variant="Variant.Filled" 
+                           Color="Color.Primary">Add Single Pass</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Visit Date</MudTh>
@@ -104,7 +105,7 @@
                 <MudTd DataLabel="In Time">@context.InTime.ToString(@"hh\:mm")</MudTd>
                 <MudTd DataLabel="Out Time">@context.OutTime.ToString(@"hh\:mm")</MudTd>
                 <MudTd DataLabel="Actions">
-                    <SinglePassAction SinglePass="@context" OnPassUpdate="ReloadTable" />
+                    <SinglePassAction SinglePass="@context" OnPassUpdate="ReloadSinglePassTable" />
                 </MudTd>
             </RowTemplate>
             <PagerContent>
@@ -113,67 +114,33 @@
         </MudTable>
     </MudTabPanel>
     <MudTabPanel Text="Multiple Pass">
-        <MudText>Content Two</MudText>
+        <MudTable ServerData="@(new Func<TableState, Task<TableData<MultiplePass>>>(ReloadMultiPasses))"
+                  @ref="multiPassTable"
+                  Hover="true">
+            <ToolBarContent>
+                <MudButton OnClick="OnCreateMultiPass" 
+                           Variant="Variant.Filled" 
+                           Color="Color.Primary">Add Multi Pass</MudButton>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>From Date</MudTh>
+                <MudTh>To Date</MudTh>
+                <MudTh>Purpose</MudTh>
+                <MudTh>Department</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="From Date">@context.FromDate.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Till Date">@context.TillDate.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Purpose">@context.Purpose</MudTd>
+                <MudTd DataLabel="Department">@context.Department</MudTd>
+                <MudTd DataLabel="Actions">
+                   <MultiPassAction MultiPass="@context" OnPassUpdate="ReloadMultiPassTable"/>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
     </MudTabPanel>
 </MudTabs>
-
-@code {
-    [Parameter]
-    public string Id { get; set; } = string.Empty;
-
-    MudTable<SinglePass>? table;
-    Visitor? visitor;
-    string? visitorPhoto;
-    string? editUrl;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        visitor = await _visitorRepo.GetByIdAsync(Guid.Parse(Id));
-
-        if (visitor == null)
-        {
-            _snackbar.Add("No visitor found", Severity.Error);
-            return;
-        }
-
-        visitorPhoto = $"/Photos/{visitor.PhotoName}";
-        editUrl = $"visitors/upsert/{visitor.Id}";
-    }
-
-
-    async Task<TableData<SinglePass>> ReloadSinglePasses(TableState state)
-    {
-        var spec = new SinglePassByVisitorIdPaginationSpec(state.Page, state.PageSize, Guid.Parse(Id));
-        var singlePasses = await _singlePassRepo.ListAsync(spec);
-        var totalCount = await _singlePassRepo.CountAsync();
-
-        return new TableData<SinglePass>() { TotalItems = totalCount, Items = singlePasses };
-    }
-
-    async Task OnCreateSinglePass()
-    {
-        var options = new DialogOptions() { 
-            DisableBackdropClick = true, 
-            Position = DialogPosition.TopCenter,
-            FullWidth = true,
-            MaxWidth = MaxWidth.Small
-        };
-
-        var parameters = new DialogParameters();
-        parameters.Add("VisitorId", visitor!.Id);
-
-        var dialog = _dialog.Show<SinglePassFormModal>("Create Single Pass Entry", parameters, options);
-
-        var result = await dialog.Result;
-
-        if (!result.Cancelled)
-        {
-            ReloadTable();
-        }
-    }
-
-    void ReloadTable()
-    {
-        table?.ReloadServerData();
-    }
-}

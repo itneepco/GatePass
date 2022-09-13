@@ -1,6 +1,5 @@
 ﻿@page "/singlepass"
 
-@using GatePass.Core.PassAggregate
 @using GatePass.Core.PassAggregate.Specifications
 @inject IReadRepository<SinglePass> _repo;
 
@@ -14,7 +13,7 @@
         <MudButton OnClick="() => AddSinglePass()" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
         <MudSpacer />
         <MudTextField @bind-Value="searchString"
-                      Placeholder="Search by officer or department to visit"
+                      Placeholder="Search by visitor name, phone no or department"
                       Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       IconSize="Size.Medium"

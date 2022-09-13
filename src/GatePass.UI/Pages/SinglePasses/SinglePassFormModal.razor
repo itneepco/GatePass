@@ -42,18 +42,20 @@
                                   Variant="Variant.Outlined"
                                   For="@(() => model.Department)" />
                 </MudItem>
-                <MudItem xs="12">
-                    <MudTextField Label="Purpose"
-                                  @bind-Value="model.Purpose"
-                                  Variant="Variant.Outlined"
-                                  For="@(() => model.Purpose)" />
-                </MudItem>
 
                 <MudItem xs="12">
                     <MudNumericField Label="No of companions"
                                      @bind-Value="model.NoOfCompanions"
                                      Variant="Variant.Outlined"
                                      Min="0" Max="10" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField Label="Purpose"
+                                  @bind-Value="model.Purpose"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Purpose)" 
+                                  Lines="2"/>
                 </MudItem>
             </MudGrid>
 
@@ -66,14 +68,14 @@
 </EditForm>
 
 @code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
 
     [Parameter] public Guid VisitorId { get; set; }
-    [Parameter] public SinglePass SinglePass { get; set; }
+    [Parameter] public SinglePass? SinglePass { get; set; }
 
     SinglePassFormDto model = new();
 
-    void Cancel() => MudDialog.Cancel();
+    void Cancel() => MudDialog?.Cancel();
 
     protected override void OnParametersSet()
     {
@@ -99,11 +101,12 @@
             return;
         }
 
-        if (SinglePass == null)
+        if (SinglePass != null) // update single pass
         {
-            await CreateSinglePass();
+            await UpdateSinglePass();
         }
-        else
+
+        if(VisitorId != Guid.Empty && SinglePass == null) // create single pass
         {
             if (!model.OutTime.HasValue)
             {
@@ -111,16 +114,16 @@
                 return;
             }
 
-            await UpdateSinglePass();
+            await CreateSinglePass();
         }
-        MudDialog.Close(DialogResult.Ok(true));
+        MudDialog?.Close(DialogResult.Ok(true));
     }
 
     async Task CreateSinglePass() {
         await _repo.AddAsync(new SinglePass(
                 visitorId: VisitorId,
-                visitDate: model.VisitDate.Value,
-                inTime: model.InTime.Value,
+                visitDate: model.VisitDate!.Value,
+                inTime: model.InTime!.Value,
                 purpose: model.Purpose,
                 officerToVisit: model.OfficerToVisit,
                 department: model.Department,
@@ -132,7 +135,7 @@
     }
 
     async Task UpdateSinglePass() {
-        var singlePassDb = await _repo.GetByIdAsync(SinglePass.Id);
+        var singlePassDb = await _repo.GetByIdAsync(SinglePass!.Id);
         if (singlePassDb == null)
         {
             _snackbar.Add("Cannot find single pass in the database");
@@ -143,9 +146,9 @@
         singlePassDb.SetOfficerToVisit(model.OfficerToVisit);
         singlePassDb.SetDepartment(model.Department);
 
-        singlePassDb.SetVisitDate(model.VisitDate.Value);
-        singlePassDb.SetInTime(model.InTime.Value);
-        singlePassDb.SetOutTime(model.OutTime.Value);
+        singlePassDb.SetVisitDate(model.VisitDate!.Value);
+        singlePassDb.SetInTime(model.InTime!.Value);
+        singlePassDb.SetOutTime(model.OutTime!.Value);
 
         await _repo.SaveChangesAsync();
         _snackbar.Add("Successfully saved visitor single pass", Severity.Success);

@@ -10,10 +10,9 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] 
-    MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
 
-    void Cancel() => MudDialog.Cancel();
+    void Cancel() => MudDialog?.Cancel();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -29,7 +28,7 @@
     public void ProcessImage(string imageString)
     {
         //var imageData = Convert.FromBase64String(imageString.Split(',')[1]);
-        MudDialog.Close(DialogResult.Ok(imageString));
-        MudDialog.Close(DialogResult.Ok(imageString));
+        MudDialog?.Close(DialogResult.Ok(imageString));
+        MudDialog?.Close(DialogResult.Ok(imageString));
     }
 }

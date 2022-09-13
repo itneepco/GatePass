@@ -1,4 +1,4 @@
-﻿@using GatePass.UI.Pages.SinglePasses
+﻿@using GatePass.UI.Pages.MultiPasses
 
 <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
     <MudMenuItem OnClick="_ => OnEditPass()">Edit Pass</MudMenuItem>
@@ -6,11 +6,11 @@
 </MudMenu>
 
 @code {
-    [Parameter, EditorRequired] 
-    public SinglePass SinglePass { get; set; } = new();
+    [Parameter, EditorRequired]
+    public MultiplePass MultiPass { get; set; } = new();
 
-    [Parameter, EditorRequired] 
-    public EventCallback<bool> OnPassUpdate {get; set; } 
+    [Parameter, EditorRequired]
+    public EventCallback<bool> OnPassUpdate { get; set; }
 
     async Task OpenSinglePassModal(bool edit)
     {
@@ -23,9 +23,9 @@
             };
 
         var parameters = new DialogParameters();
-        parameters.Add("SinglePass", SinglePass);
+        parameters.Add("MultiPass", MultiPass);
 
-        var dialog = _dialog.Show<SinglePassFormModal>("Edit Single Pass Entry", parameters, options);
+        var dialog = _dialog.Show<MultiPassFormModal>("Edit Multi Pass Entry", parameters, options);
 
         var result = await dialog.Result;
 

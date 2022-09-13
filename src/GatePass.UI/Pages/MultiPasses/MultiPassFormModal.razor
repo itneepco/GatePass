@@ -1,0 +1,119 @@
+﻿@using GatePass.Core.PassAggregate
+
+@inject IRepository<MultiplePass> _repo;
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmitAsync" class="pb-3">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid Spacing="1">
+                <MudItem xs="12">
+                    <MudDatePicker Label="From Date"
+                                   @bind-Date="model.FromDate"
+                                   Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudDatePicker Label="Till Date"
+                                   @bind-Date="model.TillDate"
+                                   Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField Label="Department"
+                                  @bind-Value="model.Department"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Department)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Purpose"
+                                  @bind-Value="model.Purpose"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Purpose)" 
+                                  Lines="3" />
+                </MudItem>
+            </MudGrid>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Ok</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+
+    [Parameter] public Guid VisitorId { get; set; }
+    [Parameter] public MultiplePass? MultiPass { get; set; }
+
+    MultiplePassFormDto model = new();
+
+    void Cancel() => MudDialog?.Cancel();
+
+    protected override void OnParametersSet()
+    {
+        model = new();
+
+        if (MultiPass != null)
+        {
+            model.FromDate = MultiPass.FromDate;
+            model.TillDate = MultiPass.TillDate;
+            model.Department = MultiPass.Department;
+            model.Purpose = MultiPass.Purpose;
+        }
+    }
+
+    async Task OnValidSubmitAsync(EditContext context)
+    {
+        if (!model.FromDate.HasValue || !model.FromDate.HasValue)
+        {
+            _snackbar.Add("Please select from date and till date", Severity.Warning);
+            return;
+        }
+
+        if (MultiPass != null)
+        {
+            await UpdateMultiPass();  // create single pass
+        }
+        
+        if(VisitorId != Guid.Empty && MultiPass == null)
+        {
+            await CreateMultiPass(); // create multi pass
+        }
+
+        MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    async Task CreateMultiPass()
+    {
+        await _repo.AddAsync(new MultiplePass(
+                visitorId: VisitorId,
+                fromDate: model.FromDate!.Value,
+                tillDate: model.TillDate!.Value,
+                department: model.Department,
+                purpose: model.Purpose
+            ));
+
+        await _repo.SaveChangesAsync();
+        _snackbar.Add("Successfully created visitor multi pass", Severity.Success);
+    }
+
+    async Task UpdateMultiPass()
+    {
+        var multiPassDb = await _repo.GetByIdAsync(MultiPass!.Id);
+        if (multiPassDb == null)
+        {
+            _snackbar.Add("Cannot find multi pass in the database");
+            return;
+        }
+        multiPassDb.SetPurpose(model.Purpose);
+        multiPassDb.SetDepartment(model.Department);
+        multiPassDb.SetFromDate(model.FromDate!.Value);
+        multiPassDb.SetTillDate(model.TillDate!.Value);
+
+        await _repo.SaveChangesAsync();
+        _snackbar.Add("Successfully saved visitor multi pass", Severity.Success);
+    }
+}

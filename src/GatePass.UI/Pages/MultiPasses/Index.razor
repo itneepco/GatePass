@@ -1,0 +1,97 @@
+﻿@page "/multipass"
+
+@using GatePass.Core.PassAggregate.Specifications
+@inject IReadRepository<MultiplePass> _repo;
+
+<HeroTitle Title="Multiple Pass" Description="Manage Multi Day Pass" />
+
+<MudTable ServerData="@(new Func<TableState, Task<TableData<MultiplePass>>>(ReloadMultiplePasses))"
+          @ref="table"
+          @bind-CurrentPage="pageIndex"
+          Hover="true">
+    <ToolBarContent>
+        <MudButton OnClick="() => AddMultiPass()" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="searchString"
+                      Placeholder="Search by visitor name, phone no or department"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+        <MudButton OnClick="@SearchVisitors"
+                   Variant="Variant.Filled"
+                   Class="ml-2"
+                   Color="Color.Secondary">Search</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Visitor Photo</MudTh>
+        <MudTh>Visitor Name</MudTh>
+        <MudTh>From Date</MudTh>
+        <MudTh>Till Date</MudTh>
+        <MudTh>Department</MudTh>
+        <MudTh>Purpose</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Visitor Photo">
+            <MudImage Fluid="true" Width="80" Height="60"
+                      Src="@GetPhotoUrl(context.Visitor?.PhotoName)"
+                      Class="rounded-lg" />
+        </MudTd>
+        <MudTd DataLabel="Visitor Name">
+            <span>@context.Visitor?.FirstName @context.Visitor?.LastName</span>
+        </MudTd>
+        <MudTd DataLabel="From Date">@context.FromDate.ToShortDateString()</MudTd>
+        <MudTd DataLabel="Till Date">@context.TillDate.ToShortDateString()</MudTd>
+        <MudTd DataLabel="Department">@context.Department</MudTd>
+        <MudTd DataLabel="Purpose">@context.Purpose</MudTd>
+        <MudTd DataLabel="Actions">
+            <MultiPassAction MultiPass="@context" OnPassUpdate="ReloadTable" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    int pageIndex;
+    MudTable<MultiplePass>? table;
+    string searchString = string.Empty;
+
+    async Task<TableData<MultiplePass>> ReloadMultiplePasses(TableState state)
+    {
+        var spec = new MultiPassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
+        var singlePasses = await _repo.ListAsync(spec);
+        var totalCount = await _repo.CountAsync();
+
+        return new TableData<MultiplePass>() { TotalItems = totalCount, Items = singlePasses };
+    }
+
+    void SearchVisitors()
+    {
+        pageIndex = 0;
+
+        ReloadTable();
+    }
+
+    void AddMultiPass()
+    {
+
+    }
+
+    void ReloadTable()
+    {
+        table?.ReloadServerData();
+    }
+
+    string GetPhotoUrl(string? photoName)
+    {
+        if (String.IsNullOrEmpty(photoName))
+        {
+            return "photos/placeholder.jpeg";
+        }
+
+        return $"photos/{photoName}";
+    }
+}
