@@ -8,6 +8,7 @@ using MudBlazor.Services;
 using GatePass.UI.Data;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
+using GatePass.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddMudServices();
+
+builder.Services.AddScoped<ISinglePassPDFService, SinglePassPDFService>();
 
 var app = builder.Build();
 

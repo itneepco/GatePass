@@ -1,7 +1,14 @@
 ﻿@using GatePass.UI.Pages.SinglePasses
+@inject ISinglePassPDFService _singlePassPdf
 
-<MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+<MudMenu Label="Actions" 
+         Variant="Variant.Filled" 
+         DisableElevation="true" 
+         EndIcon="@Icons.Filled.KeyboardArrowDown" 
+         IconColor="Color.Secondary">
+
     <MudMenuItem OnClick="_ => OnEditPass()">Edit Pass</MudMenuItem>
+    @*<MudMenuItem OnClick="_ => OnShowPass()">Show Pass</MudMenuItem>*@
     <MudMenuItem OnClick="_ => OnPrintPass()">Print Pass</MudMenuItem>
 </MudMenu>
 
@@ -40,8 +47,30 @@
         await OpenSinglePassModal(edit: true);
     }
 
-    void OnPrintPass()
+    void OnShowPass()
     {
+        var options = new DialogOptions()
+            {
+                DisableBackdropClick = true,
+                Position = DialogPosition.TopCenter,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small
+            };
 
+        var parameters = new DialogParameters();
+        parameters.Add("SinglePass", SinglePass);
+
+        var dialog = _dialog.Show<SinglePassShow>("Single Day Casual Permit", parameters, options);
+    }
+
+    async Task OnPrintPass() {
+        var bytes = await _singlePassPdf.GenerateSinglePassPdf(SinglePass);
+        
+        await _jsRuntime.InvokeVoidAsync("Download", new
+        {
+            Base64 = Convert.ToBase64String(bytes),
+            FileName = SinglePass.Id + ".pdf",
+            MimeType = "application/pdf"
+        });
     }
 }

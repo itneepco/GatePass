@@ -1,6 +1,11 @@
 ﻿@using GatePass.UI.Pages.MultiPasses
 
-<MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+<MudMenu Label="Actions" 
+         Variant="Variant.Filled" 
+         DisableElevation="true" 
+         EndIcon="@Icons.Filled.KeyboardArrowDown" 
+         IconColor="Color.Secondary">
+
     <MudMenuItem OnClick="_ => OnEditPass()">Edit Pass</MudMenuItem>
     <MudMenuItem OnClick="_ => OnPrintPass()">Print Pass</MudMenuItem>
 </MudMenu>

@@ -1,0 +1,97 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudGrid id="singlepass">
+            <MudItem sm="8">
+                <MudGrid Spacing="2">
+                    <MudItem sm="6">
+                        <strong>Visitor's Name</strong>
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        @SinglePass.Visitor?.FirstName @SinglePass.Visitor?.LastName
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        <strong>Visitor's Address</strong>
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        @SinglePass.Visitor?.Address
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        <strong>Officer to Visit</strong>
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        @SinglePass.OfficerToVisit
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        <strong>Department Name</strong>
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        @SinglePass.Department
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        <strong>Visit Date</strong>
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        @SinglePass.VisitDate.ToShortDateString()
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        <strong>In Time</strong>
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        @SinglePass.InTime.ToString(@"hh\:mm")
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        <strong>Out Time</strong>
+                    </MudItem>
+
+                    <MudItem sm="6">
+                        @SinglePass.OutTime.ToString(@"hh\:mm")
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+            <MudItem sm="4">
+                <MudImage Fluid="true" Width="140" Height="120"
+                          Src="@GetPhotoUrl(SinglePass.Visitor?.PhotoName)"
+                          Class="rounded-lg" />
+            </MudItem>
+        </MudGrid>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Print">Print</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public SinglePass SinglePass { get; set; } = new();
+
+    void Cancel() => MudDialog?.Cancel();
+
+    void Print() => MudDialog?.Close();
+
+    string GetPhotoUrl(string? photoName)
+    {
+        if (String.IsNullOrEmpty(photoName))
+        {
+            return "photos/placeholder.jpeg";
+        }
+
+        return $"photos/{photoName}";
+    }
+}
