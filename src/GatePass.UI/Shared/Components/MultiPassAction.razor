@@ -1,4 +1,5 @@
 ﻿@using GatePass.UI.Pages.MultiPasses
+@inject IGeneratePDFService _pdfService
 
 <MudMenu Label="Actions" 
          Variant="Variant.Filled" 
@@ -45,8 +46,15 @@
         await OpenSinglePassModal(edit: true);
     }
 
-    void OnPrintPass()
+    async Task OnPrintPass()
     {
+        var bytes = _pdfService.GenerateMultiPassPdf(MultiPass);
 
+        await _jsRuntime.InvokeVoidAsync("Download", new
+        {
+            Base64 = Convert.ToBase64String(bytes),
+            FileName = MultiPass.Id + ".pdf",
+            MimeType = "application/pdf"
+        });
     }
 }

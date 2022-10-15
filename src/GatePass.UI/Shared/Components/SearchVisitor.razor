@@ -1,0 +1,71 @@
+﻿@using GatePass.Core.VisitorAggregate.Specifications
+@inject IReadRepository<Visitor> _repo;
+
+<MudDialog Style="padding-bottom: 2rem">
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudAutocomplete 
+                    T="string" 
+                    Label="Visitor Phone No"
+                    ResetValueOnEmptyText="true"
+                    @bind-Value="_state" SearchFunc="@Search"
+                    Variant="Variant.Outlined"/>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="OnProceed">Proceed</MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+
+    void Cancel() => MudDialog?.Cancel();
+
+    private string? _state;
+
+    private async Task<IEnumerable<string>> Search(string value)
+    {
+        var spec = new SearchVisitorByPhoneSpec(value);
+
+        var visitors = await _repo.ListAsync(spec);
+        return visitors.Select(p => p.FirstName + " " + p.LastName + ", " + p.Phone);
+    }
+
+    async Task OnProceed()
+    {
+        if(string.IsNullOrEmpty(_state)) {
+            await GoToCreateVisitorPage();
+            return;
+        }
+
+        var phone = _state.Split(",")[1];
+        var spec = new GetVisitorByPhoneSpec(phone.Trim());
+        var visitor = await _repo.FirstOrDefaultAsync(spec);
+
+        if(visitor != null) {
+            _navManager.NavigateTo($"/visitors/detail/{visitor.Id}");
+            return;
+        }
+
+        await GoToCreateVisitorPage();
+    }
+
+    private async Task GoToCreateVisitorPage() {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "No visitor selected. Do you want to add new visitor?");
+        parameters.Add("ButtonText", "Yes");
+        parameters.Add("Color", Color.Warning);
+
+        var dialog = _dialog.Show<ConfirmDialog>("Confirmation", parameters);
+        var result = await dialog.Result;
+
+        if(!result.Cancelled) {
+            var id = Guid.Empty;
+            _navManager.NavigateTo($"/visitors/upsert/{id}");
+        }
+    }
+}

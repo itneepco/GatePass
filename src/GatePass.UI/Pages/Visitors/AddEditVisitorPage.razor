@@ -61,11 +61,11 @@
             <MudPaper Class="pa-4 d-flex flex-column align-center gap-3">
                 @if(string.IsNullOrEmpty(imageData)) 
                 {
-                    <MudImage Src="/photos/placeholder.jpg" Width="280" Height="220" Elevation="25" Class="rounded-lg" Fluid="true" />
+                    <MudImage Src="/photos/placeholder.jpg" Width="200" Height="180" Elevation="25" Class="rounded-lg" Fluid="true" />
                 }
                 else 
                 {
-                    <MudImage Src="@imageData" Elevation="25" Class="rounded-lg" Fluid="true" />
+                    <MudImage Src="@imageData" Width="220" Height="180" Elevation="25" Class="rounded-lg" Fluid="true" />
                 }
 
                 <MudButton StartIcon="@Icons.Material.Filled.PhotoCamera"

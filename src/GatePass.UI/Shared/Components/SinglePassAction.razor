@@ -1,5 +1,5 @@
 ﻿@using GatePass.UI.Pages.SinglePasses
-@inject ISinglePassPDFService _singlePassPdf
+@inject IGeneratePDFService _pdfService
 
 <MudMenu Label="Actions" 
          Variant="Variant.Filled" 
@@ -64,7 +64,7 @@
     }
 
     async Task OnPrintPass() {
-        var bytes = await _singlePassPdf.GenerateSinglePassPdf(SinglePass);
+        var bytes = _pdfService.GenerateSinglePassPdf(SinglePass);
         
         await _jsRuntime.InvokeVoidAsync("Download", new
         {

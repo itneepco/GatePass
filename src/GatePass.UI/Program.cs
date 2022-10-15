@@ -32,7 +32,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddMudServices();
 
-builder.Services.AddScoped<ISinglePassPDFService, SinglePassPDFService>();
+builder.Services.AddScoped<IGeneratePDFService, GeneratePDFService>();
 
 var app = builder.Build();
 

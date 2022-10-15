@@ -77,7 +77,15 @@
 
     void AddMultiPass()
     {
+        var options = new DialogOptions()
+            {
+                DisableBackdropClick = true,
+                Position = DialogPosition.TopCenter,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small
+            };
 
+        var dialog = _dialog.Show<SearchVisitor>("Search Visitor by Phone", options);
     }
 
     void ReloadTable()
