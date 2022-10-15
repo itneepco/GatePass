@@ -9,14 +9,14 @@
     <MudAppBar Elevation="_themeManager.AppBarElevation">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Custom.Brands.MudBlazor" Color="Color.Inherit" Link="https://mudblazor.com/" Target="_blank" />
-        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Link="https://github.com/MudBlazor/MudBlazor/" Target="_blank" />
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="_themeManager.DrawerClipMode" Elevation="_themeManager.DrawerElevation">
-        <MudDrawerHeader>
-            <MudText Typo="Typo.h6">Gate Pass</MudText>
+        <MudDrawerHeader Style="background: white" Class="d-flex flex-row align-center">
+            <MudImage Src="logo.png" Width="42" Height="42" Alt="Logo" Style="margin-right: 0.75rem"/>
+            <MudText Typo="Typo.h5">Gate Pass</MudText>
         </MudDrawerHeader>
+        <MudDivider />
         <NavMenu />
     </MudDrawer>
     

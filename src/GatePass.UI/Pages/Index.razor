@@ -1,7 +1,121 @@
 ﻿@page "/"
+@inject IReadRepository<Visitor> _vistorRepo;
+@inject IReadRepository<Location> _locationRepo;
+@inject IReadRepository<SinglePass> _singlePassRepo;
+@inject IReadRepository<MultiplePass> _multiPassRepo;
 
-<PageTitle>Index</PageTitle>
+<MudGrid Class="d-flex flex-row justify-end">
+    <MudItem xs="6" md="3">
+        <MudSelect T="Guid"
+                   Label="Select Location"
+                   Variant="Variant.Outlined"
+                   Margin="Margin.Dense"
+                   TextChanged="OnItemSelected"
+                   AnchorOrigin="Origin.BottomCenter">
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor!</MudText>
-<MudAlert Severity="Severity.Normal">You can find documentation and examples on our website here: <MudLink Href="https://mudblazor.com" Typo="Typo.body2" Color="Color.Inherit"><b>www.mudblazor.com</b></MudLink></MudAlert>
+            <MudSelectItem Value="@(Guid.Empty)">All locations</MudSelectItem>
+            
+            @foreach (var location in locations)
+            {
+                <MudSelectItem Value="@location.Id">@location.Name</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+<MudGrid Style="margin-top: 0.15rem">
+    <MudItem xs="6" md="3">
+        <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
+            <MudIcon Icon="@Icons.Material.Filled.LocationCity" Size="Size.Large" />
+            <div class="d-flex flex-column align-center justify-center">
+                <MudText Typo="Typo.body2">Total Locations</MudText>
+                <MudText Typo="Typo.h4">@locationCount</MudText>
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6" md="3">
+        <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+            <div class="d-flex flex-column align-center justify-center">
+                <MudText Typo="Typo.body2">Total Visitors</MudText>
+                <MudText Typo="Typo.h4">@visitorCount</MudText>
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6" md="3">
+        <MudPaper Class="d-flex align-center justify-space-around px-4  py-8">
+            <MudIcon Icon="@Icons.Material.Filled.Foundation" Size="Size.Large" />
+            <div class="d-flex flex-column align-center justify-center">
+                <MudText Typo="Typo.body2">Single Day Pass</MudText>
+                <MudText Typo="Typo.h4">@singlePassCount</MudText>
+            </div>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6" md="3">
+        <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
+            <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Large" />
+            <div class="d-flex flex-column align-center justify-center">
+                <MudText Typo="Typo.body2">Multiple Day Pass</MudText>
+                <MudText Typo="Typo.h4">@multiPassCount</MudText>
+            </div>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudGrid Style="margin-top: 1rem">
+    <MudItem xs="12">
+        <MudPaper Class="pa-3">
+            <div Class="d-flex flex-row justify-center">
+                <MudItem>
+                    <MudSelect T="string" Value="@("2022")"
+                               Label="Select Year"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem Value="@("2021")" />
+                        <MudSelectItem Value="@("2022")" />
+                        <MudSelectItem Value="@("2023")" />
+                    </MudSelect>
+                </MudItem>
+            </div>
+
+            <MudChart ChartType="ChartType.Bar"
+                      ChartSeries="@Series"
+                      @bind-SelectedIndex="charIndex"
+                      XAxisLabels="@XAxisLabels"
+                      Width="100%" Height="350px" />
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    int visitorCount;
+    int locationCount;
+    int singlePassCount;
+    int multiPassCount;
+    List<Location> locations = new();
+    Guid locationId = Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        visitorCount = await _vistorRepo.CountAsync();
+        locationCount = await _locationRepo.CountAsync();
+        singlePassCount = await _singlePassRepo.CountAsync();
+        multiPassCount = await _multiPassRepo.CountAsync();
+
+        locations = await _locationRepo.ListAsync();
+    }
+
+    void OnItemSelected(string args) {
+        locationId = Guid.Parse(args);
+    }
+
+    int charIndex;
+
+    public List<ChartSeries> Series = new List<ChartSeries>()
+    {
+        new ChartSeries() { Name = "Single Day Pass", Data = new double[] { 40, 20, 25, 27, 46, 60, 48, 80, 15, 99, 70 ,65 } },
+        new ChartSeries() { Name = "Multiple Day Pass", Data = new double[] { 19, 24, 35, 13, 28, 15, 13, 16, 31, 37, 39, 28 } },
+    };
+    public string[] XAxisLabels = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+}
