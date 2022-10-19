@@ -1,0 +1,133 @@
+﻿@using GatePass.Core.Identity
+@using GatePass.Core.PassAggregate
+
+@inject IRepository<Location> _repo;
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmitAsync" class="pb-3">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid Spacing="1">
+                <MudItem xs="12">
+                    <MudTextField Label="Display Name"
+                                  @bind-Value="model.DisplayName"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.DisplayName)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Username"
+                                  @bind-Value="model.UserName"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.UserName)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Email"
+                                  @bind-Value="model.Email"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Email)" />
+                </MudItem>
+                @if (AppUser == null)
+                {
+                    <MudItem xs="12">
+                        <MudTextField Immediate="true"
+                                  Label="Password"
+                                  @bind-Value="model.Password"
+                                  For="@(() => model.Password)"
+                                  Variant="Variant.Outlined"
+                                  InputType="@PasswordInput"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@PasswordInputIcon"
+                                  Required="true"
+                                  RequiredError="password is required!"
+                                  OnAdornmentClick="TogglePasswordVisibility" Class="mt-4" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField Immediate="true"
+                                  Label="Confirm Password"
+                                  @bind-Value="model.ConfirmPassword"
+                                  For="@(() => model.ConfirmPassword)"
+                                  Variant="Variant.Outlined"
+                                  InputType="@PasswordInput"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@PasswordInputIcon"
+                                  Required="true"
+                                  RequiredError="confrm password is required!"
+                                  OnAdornmentClick="TogglePasswordVisibility" Class="mt-4" />
+                    </MudItem>
+                }
+            </MudGrid>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Ok</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+
+    [Parameter] public AppUser? AppUser { get; set; }
+
+    UserFormDto model = new();
+
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+    bool PasswordVisibility;
+    InputType PasswordInput = InputType.Password;
+
+    void Cancel() => MudDialog?.Cancel();
+
+    protected override void OnParametersSet()
+    {
+        model = new();
+
+        if (AppUser != null)
+        {
+            model.DisplayName = AppUser.DisplayName;
+            model.UserName = AppUser.UserName;
+            model.Email = AppUser.DisplayName;
+            model.IsActive = AppUser.IsActive;
+        }
+    }
+
+    async Task OnValidSubmitAsync(EditContext context)
+    {
+        if (AppUser != null)
+        {
+            await UpdateUser();  // update user
+        }
+        else
+        {
+            await CreateUser(); // create user
+        }
+
+        MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    async Task CreateUser()
+    {
+        _snackbar.Add("Successfully created location", Severity.Success);
+    }
+
+    async Task UpdateUser()
+    {
+        _snackbar.Add("Successfully updated location", Severity.Success);
+    }
+
+    void TogglePasswordVisibility()
+    {
+        @if (PasswordVisibility)
+        {
+            PasswordVisibility = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            PasswordVisibility = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+}

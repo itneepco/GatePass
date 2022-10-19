@@ -1,4 +1,5 @@
 ﻿@page "/visitors/detail/{Id}"
+@attribute [Authorize]
 
 @inject IReadRepository<Visitor> _visitorRepo;
 @inject IReadRepository<SinglePass> _singlePassRepo;

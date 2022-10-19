@@ -1,7 +1,26 @@
-﻿<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="locations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationCity">Locations</MudNavLink>
+﻿@using System.Security.Claims
+
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
     <MudNavLink Href="visitors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Visitors</MudNavLink>
     <MudNavLink Href="singlepass" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Foundation">Single Pass</MudNavLink>
     <MudNavLink Href="multipass" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CalendarMonth">Multi Pass</MudNavLink>
+    @if (currentUser != null && currentUser.IsInRole("Admin"))
+    {
+        <MudNavLink Href="locations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocationCity">Locations</MudNavLink>
+        <MudNavLink Href="users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountCircle">Users</MudNavLink>
+    }
 </MudNavMenu>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+
+    ClaimsPrincipal? currentUser;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await authenticationStateTask;
+        currentUser = authState.User;
+    }
+}

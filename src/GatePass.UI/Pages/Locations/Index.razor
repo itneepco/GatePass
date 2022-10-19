@@ -1,4 +1,5 @@
 ﻿@page "/locations"
+@attribute [Authorize(Roles = "Admin")]
 
 @inject IRepository<Location> _repository;
 
@@ -10,6 +11,7 @@
           Filter="new Func<Location, bool>(FilterLocation)">
 
     <ToolBarContent>
+        <MudButton OnClick="() => AddLocation()" Variant="Variant.Filled" Color="Color.Primary">Add Location</MudButton>
         <MudSpacer />
         <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
@@ -21,8 +23,7 @@
         <MudTd DataLabel="Location">@context.Name</MudTd>
         <MudTd DataLabel="Actions">
             <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
-                <MudMenuItem>Edit</MudMenuItem>
-                <MudMenuItem>Delete</MudMenuItem>
+                <MudMenuItem OnClick="() => EditLocation(context)" >Edit</MudMenuItem>
             </MudMenu>
         </MudTd>
     </RowTemplate>
@@ -38,6 +39,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadLocations();
+    }
+
+    private async Task ReloadLocations() {
         Locations = await _repository.ListAsync();
     }
 
@@ -50,5 +55,45 @@
         if (location.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true;
         return false;
+    }
+
+    private async Task AddLocation() {
+        var options = new DialogOptions()
+            {
+                DisableBackdropClick = true,
+                Position = DialogPosition.TopCenter,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small
+            };
+
+        var dialog = _dialog.Show<LocationFormModal>("Create New Location", options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            await ReloadLocations();
+        }
+    }
+
+    private async Task EditLocation(Location location)
+    {
+        var options = new DialogOptions()
+            {
+                DisableBackdropClick = true,
+                Position = DialogPosition.TopCenter,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small
+            };
+        
+        var parameters = new DialogParameters();
+        parameters.Add("Location", location);
+
+        var dialog = _dialog.Show<LocationFormModal>("Update Location", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            await ReloadLocations();
+        }
     }
 }

@@ -1,0 +1,82 @@
+﻿@using GatePass.Core.PassAggregate
+
+@inject IRepository<Location> _repo;
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmitAsync" class="pb-3">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid Spacing="1">
+                <MudItem xs="12">
+                    <MudTextField Label="Location Name"
+                                  @bind-Value="model.Name"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => model.Name)" />
+                </MudItem>
+            </MudGrid>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Ok</MudButton>
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+@code {
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+
+    [Parameter] public Location? Location { get; set; }
+
+    LocationFormDto model = new();
+
+    void Cancel() => MudDialog?.Cancel();
+
+    protected override void OnParametersSet()
+    {
+        model = new();
+
+        if (Location != null)
+        {
+            model.Name = Location.Name;
+        }
+    }
+
+    async Task OnValidSubmitAsync(EditContext context)
+    {
+        if (Location != null)
+        {
+            await UpdateLocation();  // update single pass
+        }
+        else
+        {
+            await CreateLocation(); // create multi pass
+        }
+
+        MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    async Task CreateLocation()
+    {
+        await _repo.AddAsync(new Location(
+                name: model.Name
+            ));
+
+        await _repo.SaveChangesAsync();
+        _snackbar.Add("Successfully created location", Severity.Success);
+    }
+
+    async Task UpdateLocation()
+    {
+        var locationDb = await _repo.GetByIdAsync(Location!.Id);
+        if (locationDb == null)
+        {
+            _snackbar.Add("Cannot find location in the database");
+            return;
+        }
+        locationDb.SetName(model.Name);
+
+        await _repo.SaveChangesAsync();
+        _snackbar.Add("Successfully updated location", Severity.Success);
+    }
+}

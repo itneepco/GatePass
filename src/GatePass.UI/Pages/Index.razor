@@ -1,4 +1,6 @@
 ﻿@page "/"
+@attribute [Authorize]
+
 @inject IReadRepository<Visitor> _vistorRepo;
 @inject IReadRepository<Location> _locationRepo;
 @inject IReadRepository<SinglePass> _singlePassRepo;

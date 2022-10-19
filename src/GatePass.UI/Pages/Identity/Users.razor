@@ -1,0 +1,127 @@
+﻿@page "/users"
+@attribute [Authorize(Roles = "Admin")]
+@inherits OwningComponentBase
+
+@using GatePass.Core.Identity
+@using GatePass.Core.PassAggregate.Specifications
+@using Microsoft.AspNetCore.Identity
+
+<HeroTitle Title="Users" Description="Manage Users" />
+
+<MudTable ServerData="@(new Func<TableState, Task<TableData<AppUser>>>(ReloadSinglePasses))"
+          @ref="table"
+          @bind-CurrentPage="pageIndex"
+          Hover="true">
+    <ToolBarContent>
+        <MudButton OnClick="() => AddUser()" Variant="Variant.Filled" Color="Color.Primary">Add User</MudButton>
+        <MudSpacer />
+        <MudTextField @bind-Value="searchString"
+                      Placeholder="Search by username"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0" />
+        <MudButton OnClick="@SearchLocations"
+                   Variant="Variant.Filled"
+                   Class="ml-2"
+                   Color="Color.Secondary">Search</MudButton>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Display Name</MudTh>
+        <MudTh>Username</MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Display Name">@context.DisplayName</MudTd>
+        <MudTd DataLabel="Username">@context.UserName</MudTd>
+        <MudTd DataLabel="Email">@context.Email</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+                <MudMenuItem>Edit</MudMenuItem>
+                <MudMenuItem>Delete</MudMenuItem>
+            </MudMenu>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> _authState { get; set; } = default!;
+    private UserManager<AppUser> _userManager { get; set; } = default!;
+
+    [Inject]
+    private ProfileService _profileService { get; set; } = default!;
+
+    int pageIndex;
+    MudTable<AppUser>? table;
+    string searchString = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _userManager = ScopedServices.GetRequiredService<UserManager<AppUser>>();
+    }
+
+    async Task<TableData<AppUser>> ReloadSinglePasses(TableState state)
+    {
+        
+        var users = _userManager.Users
+                        .Where(p => p.UserName.ToLower().Contains(searchString.ToLower()))
+                        .Take(state.PageSize)
+                        .Skip(state.Page * state.PageSize);
+
+        var totalCount = _userManager.Users.Count();
+
+        return new TableData<AppUser>() { TotalItems = totalCount, Items = users };
+    }
+
+    void SearchLocations()
+    {
+        pageIndex = 0;
+        ReloadTable();
+    }
+
+    void AddUser()
+    {
+        var options = new DialogOptions()
+            {
+                DisableBackdropClick = true,
+                Position = DialogPosition.TopCenter,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small
+            };
+
+        var dialog = _dialog.Show<UserFormModal>("Add New User", options);
+    }
+
+    void EditUser()
+    {
+        var options = new DialogOptions()
+            {
+                DisableBackdropClick = true,
+                Position = DialogPosition.TopCenter,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small
+            };
+
+        var dialog = _dialog.Show<SearchVisitor>("Search Visitor by Phone", options);
+    }
+
+    void ReloadTable()
+    {
+        table?.ReloadServerData();
+    }
+
+    string GetPhotoUrl(string? photoName)
+    {
+        if (String.IsNullOrEmpty(photoName))
+        {
+            return "photos/placeholder.jpeg";
+        }
+
+        return $"photos/{photoName}";
+    }
+}

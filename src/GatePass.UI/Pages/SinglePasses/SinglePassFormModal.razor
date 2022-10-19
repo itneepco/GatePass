@@ -103,17 +103,17 @@
 
         if (SinglePass != null) // update single pass
         {
-            await UpdateSinglePass();
-        }
-
-        if(VisitorId != Guid.Empty && SinglePass == null) // create single pass
-        {
             if (!model.OutTime.HasValue)
             {
                 _snackbar.Add("Please select out time", Severity.Warning);
                 return;
             }
 
+            await UpdateSinglePass();
+        }
+
+        if(VisitorId != Guid.Empty && SinglePass == null) // create single pass
+        {
             await CreateSinglePass();
         }
         MudDialog?.Close(DialogResult.Ok(true));

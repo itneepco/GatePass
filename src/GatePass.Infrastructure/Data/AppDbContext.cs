@@ -1,13 +1,15 @@
 ﻿using System.Reflection;
+using GatePass.Core.Identity;
 using GatePass.Core.LocationAggregate;
 using GatePass.Core.PassAggregate;
 using GatePass.Core.VisitorAggregate;
 using GatePass.SharedKernel;
 using GatePass.SharedKernel.Interfaces;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace GatePass.Infrastructure.Data;
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<AppUser>
 {
     private readonly IDomainEventDispatcher? _dispatcher;
 

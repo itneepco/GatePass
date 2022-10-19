@@ -1,4 +1,5 @@
 ﻿@page "/singlepass"
+@attribute [Authorize]
 
 @using GatePass.Core.PassAggregate.Specifications
 @inject IReadRepository<SinglePass> _repo;

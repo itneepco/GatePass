@@ -1,4 +1,5 @@
 ﻿@page "/visitors"
+@attribute [Authorize]
 
 @inject IReadRepository<Visitor> _repository;
 

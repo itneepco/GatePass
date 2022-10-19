@@ -7,16 +7,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Remove="wwwroot\pdf.js" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="itext7" Version="7.2.3" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.8">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.8.4">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.10">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -33,10 +25,4 @@
 		<Folder Include="Logs\" />
 		<Folder Include="wwwroot\photos\" />
 	</ItemGroup>
-
-	<!--<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-		<Exec Command="npm install" WorkingDirectory="npm_packages" />
-		<Exec Command="npm run build" WorkingDirectory="npm_packages" />
-	</Target>-->
-
 </Project>

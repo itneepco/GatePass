@@ -1,4 +1,5 @@
 ﻿@page "/multipass"
+@attribute [Authorize]
 
 @using GatePass.Core.PassAggregate.Specifications
 @inject IReadRepository<MultiplePass> _repo;

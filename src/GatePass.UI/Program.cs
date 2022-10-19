@@ -5,10 +5,12 @@ using GatePass.Infrastructure;
 using GatePass.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using MudBlazor.Services;
-using GatePass.UI.Data;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
 using GatePass.UI.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using GatePass.Core.Identity;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,10 +31,15 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddMudServices();
 
 builder.Services.AddScoped<IGeneratePDFService, GeneratePDFService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<ProfileService>();
+
+builder.Services
+    .AddScoped<IdentityAuthenticationService>()
+    .AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<IdentityAuthenticationService>());
 
 var app = builder.Build();
 
@@ -45,8 +52,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseRouting();
 
@@ -65,6 +74,11 @@ using (var scope = app.Services.CreateScope())
         await context.Database.MigrateAsync();
         context.Database.EnsureCreated();
         await AppDbContextSeed.SeedAsync(context, loggerFactory);
+
+        // seeding users
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await AppDbContextSeed.SeedUsersAsync(userManager, roleManager, context);
     }
     catch (Exception ex)
     {
