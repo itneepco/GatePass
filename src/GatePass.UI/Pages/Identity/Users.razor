@@ -1,14 +1,12 @@
 ﻿@page "/users"
 @attribute [Authorize(Roles = "Admin")]
-@inherits OwningComponentBase
 
 @using GatePass.Core.Identity
 @using GatePass.Core.PassAggregate.Specifications
-@using Microsoft.AspNetCore.Identity
 
 <HeroTitle Title="Users" Description="Manage Users" />
 
-<MudTable ServerData="@(new Func<TableState, Task<TableData<AppUser>>>(ReloadSinglePasses))"
+<MudTable ServerData="@(new Func<TableState, Task<TableData<AppUser>>>(ReloadUsers))"
           @ref="table"
           @bind-CurrentPage="pageIndex"
           Hover="true">
@@ -21,7 +19,7 @@
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       IconSize="Size.Medium"
                       Class="mt-0" />
-        <MudButton OnClick="@SearchLocations"
+        <MudButton OnClick="@SearchUsers"
                    Variant="Variant.Filled"
                    Class="ml-2"
                    Color="Color.Secondary">Search</MudButton>
@@ -30,16 +28,20 @@
         <MudTh>Display Name</MudTh>
         <MudTh>Username</MudTh>
         <MudTh>Email</MudTh>
+        <MudTh>Is Active</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Display Name">@context.DisplayName</MudTd>
         <MudTd DataLabel="Username">@context.UserName</MudTd>
         <MudTd DataLabel="Email">@context.Email</MudTd>
+        <MudTd DataLabel="Email">
+            <MudCheckBox Checked="@context.IsActive" ReadOnly Color="Color.Secondary" />
+        </MudTd>
         <MudTd DataLabel="Actions">
             <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
-                <MudMenuItem>Edit</MudMenuItem>
-                <MudMenuItem>Delete</MudMenuItem>
+                <MudMenuItem OnClick="() => EditUser(context)">Edit</MudMenuItem>
+                <MudMenuItem OnClick="() => DeleteUser(context)">Delete</MudMenuItem>
             </MudMenu>
         </MudTd>
     </RowTemplate>
@@ -51,40 +53,36 @@
 @code {
     [CascadingParameter]
     private Task<AuthenticationState> _authState { get; set; } = default!;
-    private UserManager<AppUser> _userManager { get; set; } = default!;
 
-    [Inject]
-    private ProfileService _profileService { get; set; } = default!;
+    [Inject] private UserManager<AppUser> _userManager { get; set; } = default!;
+
+    [Inject] private ProfileService _profileService { get; set; } = default!;
 
     int pageIndex;
     MudTable<AppUser>? table;
     string searchString = string.Empty;
+    List<Location> locations = new();
 
-    protected override void OnInitialized()
+    async Task<TableData<AppUser>> ReloadUsers(TableState state)
     {
-        _userManager = ScopedServices.GetRequiredService<UserManager<AppUser>>();
-    }
-
-    async Task<TableData<AppUser>> ReloadSinglePasses(TableState state)
-    {
-        
-        var users = _userManager.Users
+        var users = await _userManager.Users
                         .Where(p => p.UserName.ToLower().Contains(searchString.ToLower()))
                         .Take(state.PageSize)
-                        .Skip(state.Page * state.PageSize);
+                        .Skip(state.Page * state.PageSize)
+                        .ToListAsync();
 
         var totalCount = _userManager.Users.Count();
 
         return new TableData<AppUser>() { TotalItems = totalCount, Items = users };
     }
 
-    void SearchLocations()
+    void SearchUsers()
     {
         pageIndex = 0;
         ReloadTable();
     }
 
-    void AddUser()
+    async Task AddUser()
     {
         var options = new DialogOptions()
             {
@@ -95,9 +93,14 @@
             };
 
         var dialog = _dialog.Show<UserFormModal>("Add New User", options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            ReloadTable();
+        }
     }
 
-    void EditUser()
+    async Task EditUser(AppUser user)
     {
         var options = new DialogOptions()
             {
@@ -107,21 +110,37 @@
                 MaxWidth = MaxWidth.Small
             };
 
-        var dialog = _dialog.Show<SearchVisitor>("Search Visitor by Phone", options);
+        var parameters = new DialogParameters();
+        parameters.Add("AppUser", user);
+
+        var dialog = _dialog.Show<UserFormModal>("Update User", parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            ReloadTable();
+        }
+    }
+
+    async Task DeleteUser(AppUser user) {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "Do you want to delete the user?");
+        parameters.Add("ButtonText", "Yes");
+        parameters.Add("Color", Color.Error);
+
+        var dialog = _dialog.Show<ConfirmDialog>("Confirmation", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            await _userManager.DeleteAsync(user);
+
+            _snackbar.Add("Deleted the user successfully", Severity.Success);
+            ReloadTable();
+        }
     }
 
     void ReloadTable()
     {
         table?.ReloadServerData();
-    }
-
-    string GetPhotoUrl(string? photoName)
-    {
-        if (String.IsNullOrEmpty(photoName))
-        {
-            return "photos/placeholder.jpeg";
-        }
-
-        return $"photos/{photoName}";
     }
 }

@@ -1,6 +1,7 @@
 ﻿@using GatePass.Core.Identity
 @using GatePass.Core.PassAggregate
 
+@inherits OwningComponentBase
 @inject IRepository<Location> _repo;
 
 <EditForm Model="@model" OnValidSubmit="OnValidSubmitAsync" class="pb-3">
@@ -26,35 +27,38 @@
                                   Variant="Variant.Outlined"
                                   For="@(() => model.Email)" />
                 </MudItem>
-                @if (AppUser == null)
-                {
-                    <MudItem xs="12">
-                        <MudTextField Immediate="true"
-                                  Label="Password"
-                                  @bind-Value="model.Password"
-                                  For="@(() => model.Password)"
-                                  Variant="Variant.Outlined"
-                                  InputType="@PasswordInput"
-                                  Adornment="Adornment.End"
-                                  AdornmentIcon="@PasswordInputIcon"
-                                  Required="true"
-                                  RequiredError="password is required!"
-                                  OnAdornmentClick="TogglePasswordVisibility" Class="mt-4" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudTextField Immediate="true"
-                                  Label="Confirm Password"
-                                  @bind-Value="model.ConfirmPassword"
-                                  For="@(() => model.ConfirmPassword)"
-                                  Variant="Variant.Outlined"
-                                  InputType="@PasswordInput"
-                                  Adornment="Adornment.End"
-                                  AdornmentIcon="@PasswordInputIcon"
-                                  Required="true"
-                                  RequiredError="confrm password is required!"
-                                  OnAdornmentClick="TogglePasswordVisibility" Class="mt-4" />
-                    </MudItem>
-                }
+                <MudItem xs="12">
+                    <MudSelect Label="Location"
+                               @bind-Value="model.LocationId"
+                               For="@(() => model.LocationId)"
+                               Variant="Variant.Outlined" 
+                               AnchorOrigin="Origin.BottomCenter">
+
+                        <MudSelectItem Value="@Guid.Empty">Select Location</MudSelectItem>
+                        @foreach (var location in locations)
+                        {
+                            <MudSelectItem Value="@location.Id">@location.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.caption">Status</MudText>
+                    <div class="d-fex">
+                        <MudCheckBox For="@(() => model.IsActive)" T="bool" @bind-Checked="model.IsActive" Label="Is Active"></MudCheckBox>
+                    </div>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.caption">Assign Roles</MudText>
+                    <MudGrid Class="mt-1">
+                        @for (int i = 0; i < _roles.Count; i++)
+                        {
+                            var x = i;
+                            <MudItem xs="6" sm="6" Class="py-0 my=0">
+                                <MudCheckBox T="bool" Checked="@_roles[x].value" Label="@_roles[x].key" CheckedChanged="@(s=>_roles[x].value=s)" />
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudItem>                      
             </MudGrid>
 
         </DialogContent>
@@ -66,68 +70,118 @@
 </EditForm>
 
 @code {
-    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+    public class KeyValue
+    {
+        public string key { get; set; } = string.Empty;
+        public bool value { get; set; }
+    }
+    private List<KeyValue> _roles { get; set; } = new();
 
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
     [Parameter] public AppUser? AppUser { get; set; }
 
-    UserFormDto model = new();
+    [Inject] private UserManager<AppUser> _userManager { get; set; } = default!;
+    [Inject] private RoleManager<IdentityRole> _roleManager { get; set; } = default!;
 
-    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
-    bool PasswordVisibility;
-    InputType PasswordInput = InputType.Password;
+    UserFormDto model = new();
+    List<Location> locations = new();
 
     void Cancel() => MudDialog?.Cancel();
 
-    protected override void OnParametersSet()
+    protected override async Task OnInitializedAsync()
+    {
+        locations = await _repo.ListAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
     {
         model = new();
-
         if (AppUser != null)
         {
+            var roles = await _userManager.GetRolesAsync(AppUser);
+            model.Roles = (List<string>)roles;
+
             model.DisplayName = AppUser.DisplayName;
             model.UserName = AppUser.UserName;
-            model.Email = AppUser.DisplayName;
+            model.Email = AppUser.Email;
             model.IsActive = AppUser.IsActive;
+            model.LocationId = AppUser.LocationId;
+        }
+
+        var array = await _roleManager.Roles.Select(x => x.Name).ToListAsync();
+        foreach (var role in array)
+        {
+            if (model.Roles.Contains(role))
+                _roles.Add(new() { key = role, value = true });
+            else
+                _roles.Add(new() { key = role, value = false });
         }
     }
 
     async Task OnValidSubmitAsync(EditContext context)
     {
+        if(model.LocationId == Guid.Empty) {
+            _snackbar.Add("Please select a location", Severity.Error);
+            return;
+        }
+
         if (AppUser != null)
-        {
             await UpdateUser();  // update user
-        }
         else
-        {
             await CreateUser(); // create user
-        }
 
         MudDialog?.Close(DialogResult.Ok(true));
     }
 
     async Task CreateUser()
     {
-        _snackbar.Add("Successfully created location", Severity.Success);
+        var user = new AppUser
+            {
+                DisplayName = model.DisplayName,
+                Email = model.Email,
+                UserName = model.UserName,
+                IsActive = model.IsActive,
+                LocationId = model.LocationId
+            };
+
+        var result = await _userManager.CreateAsync(user, "Pass@123");
+        if (result.Succeeded)
+        {
+            foreach (var role in model.Roles)
+            {
+                await _userManager.AddToRoleAsync(user, role);
+            }
+        }
+
+        _snackbar.Add("Successfully create user", Severity.Success);
     }
 
     async Task UpdateUser()
     {
-        _snackbar.Add("Successfully updated location", Severity.Success);
-    }
+        var user = await _userManager.FindByIdAsync(AppUser!.Id);
+        var roles = await _userManager.GetRolesAsync(user);
 
-    void TogglePasswordVisibility()
-    {
-        @if (PasswordVisibility)
+        model.Roles = _roles.Where(x => x.value).Select(x => x.key).ToList();
+
+        user.DisplayName = model.DisplayName;
+        user.UserName = model.UserName;
+        user.Email = model.Email;
+        user.IsActive = model.IsActive;
+        user.LocationId = model.LocationId;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (result.Succeeded)
         {
-            PasswordVisibility = false;
-            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
-            PasswordInput = InputType.Password;
+            var removeRoleResult = await _userManager.RemoveFromRolesAsync(user, roles);
+            if (removeRoleResult.Succeeded)
+            {
+                foreach (var role in model.Roles)
+                {
+                    await _userManager.AddToRoleAsync(user, role);
+                }
+            }
         }
-        else
-        {
-            PasswordVisibility = true;
-            PasswordInputIcon = Icons.Material.Filled.Visibility;
-            PasswordInput = InputType.Text;
-        }
+
+        _snackbar.Add("Successfully updated user", Severity.Success);
     }
 }
