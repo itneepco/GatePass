@@ -41,6 +41,7 @@
         <MudTd DataLabel="Actions">
             <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
                 <MudMenuItem OnClick="() => EditUser(context)">Edit</MudMenuItem>
+                <MudMenuItem OnClick="() => ResetPassword(context)">Reset Password</MudMenuItem>
                 <MudMenuItem OnClick="() => DeleteUser(context)">Delete</MudMenuItem>
             </MudMenu>
         </MudTd>
@@ -118,6 +119,24 @@
         if (!result.Cancelled)
         {
             ReloadTable();
+        }
+    }
+
+    async Task ResetPassword(AppUser user) {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "Do you want to reset password for this user?");
+        parameters.Add("ButtonText", "Yes");
+        parameters.Add("Color", Color.Primary);
+
+        var dialog = _dialog.Show<ConfirmDialog>("Password Reset Confirmation", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            await _userManager.ResetPasswordAsync(user, token, "Pass@123");
+
+            _snackbar.Add("Password reset successfult - Pass@123", Severity.Success);
         }
     }
 

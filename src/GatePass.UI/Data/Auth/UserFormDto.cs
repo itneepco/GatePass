@@ -15,5 +15,5 @@ public class UserFormDto
 
     public List<string> Roles { get; set; } = new();
     
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
 }

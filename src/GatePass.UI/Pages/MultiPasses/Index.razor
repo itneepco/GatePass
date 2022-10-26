@@ -2,6 +2,8 @@
 @attribute [Authorize]
 
 @using GatePass.Core.PassAggregate.Specifications
+@using System.Security.Claims
+@using GatePass.UI.Extensions
 @inject IReadRepository<MultiplePass> _repo;
 
 <HeroTitle Title="Multiple Pass" Description="Manage Multi Day Pass" />
@@ -60,13 +62,36 @@
     MudTable<MultiplePass>? table;
     string searchString = string.Empty;
 
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+    ClaimsPrincipal currentUser = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        currentUser = authState.User;
+    }
+
     async Task<TableData<MultiplePass>> ReloadMultiplePasses(TableState state)
     {
-        var spec = new MultiPassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
-        var singlePasses = await _repo.ListAsync(spec);
+        List<MultiplePass> multiPasses = new();
+
+        if (currentUser.IsInRole("Admin"))
+        { //fetch all visitors
+            var spec = new MultiPassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
+            multiPasses = await _repo.ListAsync(spec);
+        }
+        else //fetch visitors based on locationId
+        {
+            var spec = new MultiPassWithVisitorByLocationIdPaginationSpec(currentUser.GetLocationId(), state.Page, state.PageSize, searchString);
+            multiPasses = await _repo.ListAsync(spec);
+        }
         var totalCount = await _repo.CountAsync();
 
-        return new TableData<MultiplePass>() { TotalItems = totalCount, Items = singlePasses };
+        return new TableData<MultiplePass>() { 
+            TotalItems = totalCount, 
+            Items = multiPasses
+        };
     }
 
     void SearchVisitors()

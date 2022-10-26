@@ -24,6 +24,7 @@ public class IdentitySeed
                         Email = "admin",
                         UserName = "admin",
                         PhoneNumber = "8976453420",
+                        IsActive = true,
                         LocationId = agbps != null ? agbps.Id : Guid.Empty
                     },
                     new AppUser
@@ -31,6 +32,7 @@ public class IdentitySeed
                         DisplayName = "AGBPS Security",
                         Email = "agbps_sec",
                         UserName = "agbps_sec",
+                        IsActive = true,
                         LocationId = agbps != null ? agbps.Id : Guid.Empty
                     },
                     new AppUser
@@ -38,6 +40,7 @@ public class IdentitySeed
                         DisplayName = "Shillong Security",
                         Email = "shillong_sec",
                         UserName = "shillong_sec",
+                        IsActive = true,
                         LocationId = shillong != null ? shillong.Id : Guid.Empty
                     }
                 };

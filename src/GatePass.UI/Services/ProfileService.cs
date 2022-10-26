@@ -19,6 +19,7 @@ public class ProfileService
             Role = principal.GetRoles().FirstOrDefault(),
             UserId = principal.GetUserId(),
             UserName = principal.GetUserName(),
+            LocationId = principal.GetLocationId()
         };
         OnChange?.Invoke();
         return Task.CompletedTask;

@@ -2,6 +2,8 @@
 @attribute [Authorize]
 
 @using GatePass.Core.PassAggregate.Specifications
+@using System.Security.Claims
+@using GatePass.UI.Extensions
 @inject IReadRepository<SinglePass> _repo;
 
 <HeroTitle Title="Single Pass" Description="Manage Single / Day Pass" />
@@ -62,13 +64,37 @@
     MudTable<SinglePass>? table;
     string searchString = string.Empty;
 
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+
+    ClaimsPrincipal currentUser = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        currentUser = authState.User;
+    }
+
     async Task<TableData<SinglePass>> ReloadSinglePasses(TableState state)
     {
-        var spec = new SinglePassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
-        var singlePasses = await _repo.ListAsync(spec);
+        List<SinglePass> singlePasses = new();
+        
+        if(currentUser.IsInRole("Admin")) { //fetch all visitors
+            var spec = new SinglePassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
+            singlePasses = await _repo.ListAsync(spec);
+        }
+        else //fetch visitors based on locationId
+        { 
+            var spec = new SinglePassWithVisitorByLocationIdPaginationSpec(currentUser.GetLocationId(), state.Page, state.PageSize, searchString);
+            singlePasses = await _repo.ListAsync(spec);
+        }
+
         var totalCount = await _repo.CountAsync();
 
-        return new TableData<SinglePass>() { TotalItems = totalCount, Items = singlePasses };
+        return new TableData<SinglePass>() { 
+            TotalItems = totalCount, 
+            Items = singlePasses 
+        };
     }
 
     void SearchVisitors() {

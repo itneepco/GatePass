@@ -1,6 +1,7 @@
 ﻿using GatePass.Core.Identity;
 using GatePass.UI.Data;
 using GatePass.UI.Data.Constants;
+using GatePass.UI.Extensions;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Identity;
@@ -42,15 +43,25 @@ public class IdentityAuthenticationService : AuthenticationStateProvider, IAuthe
                 using (var deserializationStream = new MemoryStream(buffer))
                 {
                     var identity = new ClaimsIdentity(new BinaryReader(deserializationStream, Encoding.UTF8));
-                    principal = new(identity);
+                    principal = new ClaimsPrincipal(identity);
+
+                    var tokenExpiryTime = DateTime.Parse(principal.GetExpiration());
+                    var compare = DateTime.Compare(tokenExpiryTime, DateTime.Now);
+
+                    if (compare <= 0)
+                    {
+                        principal = new ClaimsPrincipal(new ClaimsIdentity());
+                    }
                 }
-                NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(principal)));
             }
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
         }
+
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(principal)));
+        
         return new AuthenticationState(principal);
     }
 
@@ -60,6 +71,8 @@ public class IdentityAuthenticationService : AuthenticationStateProvider, IAuthe
         var result = new ClaimsIdentity(KEY);
         result.AddClaim(new(ClaimTypes.NameIdentifier, user.Id));
         result.AddClaim(new(ApplicationClaimTypes.Status, user.IsActive.ToString()));
+        result.AddClaim(new(ClaimTypes.Expiration, DateTime.Now.AddHours(10).ToString()));
+
         if (!string.IsNullOrEmpty(user.UserName))
         {
             result.AddClaims(new[] {

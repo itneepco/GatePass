@@ -8,17 +8,15 @@
 
 <AuthorizeView>
     <NotAuthorized Context="Auth">
-        <MudForm Model="@_model" @ref="@_form" @bind-IsValid="@_success" ValidationDelay="0">
+        <EditForm Model="@_model" OnValidSubmit="@OnSubmit">
+            <DataAnnotationsValidator />
+
             <MudText Typo="Typo.h4" GutterBottom="true">Sign In</MudText>
 
             <MudTextField @bind-Value="_model.UserName" For="@(() => _model.UserName)"
                           Label="User name"
                           Variant="Variant.Outlined"
-                          Required="true"
-                          OnlyValidateIfDirty="true"
-                          Immediate="true"
-                          RequiredError="user name is required!"
-                          Class="my-6"></MudTextField>
+                          Class="my-6" />
 
             <MudTextField @bind-Value="_model.Password" For="@(() => _model.Password)"
                           Label="Password"
@@ -26,10 +24,6 @@
                           InputType="@PasswordInput"
                           Adornment="Adornment.End"
                           AdornmentIcon="@PasswordInputIcon"
-                          OnlyValidateIfDirty="true"
-                          Immediate="true"
-                          Required="true"
-                          RequiredError="password is required!"
                           OnAdornmentClick="TogglePasswordVisibility" />
 
             <div Class="d-flex justify-space-between align-center">
@@ -37,9 +31,9 @@
                              @bind-Checked="_model.RememberMe"
                              Label="Remember me?"
                              Color="Color.Primary"
-                             Class="ml-n1 my-3"></MudCheckBox>
+                             Class="ml-n1 my-3" />
 
-                <MudLink Href="/pages/authentication/forgot-password">Forgot password?</MudLink>
+                <MudLink Href="/authentication/forgot-password">Forgot password?</MudLink>
             </div>
 
 
@@ -47,8 +41,7 @@
                        Color="Color.Primary"
                        Size="Size.Large"
                        Disabled="@(_loading)"
-                       ButtonType="ButtonType.Button"
-                       OnClick="@(() => OnSubmit())"
+                       ButtonType="ButtonType.Submit"
                        FullWidth="true">
                 @if (_loading)
                 {
@@ -61,7 +54,7 @@
                 }
 
             </MudButton>
-        </MudForm>
+        </EditForm>
     </NotAuthorized>
     <Authorized>
         <RedirectToHome></RedirectToHome>
@@ -75,7 +68,7 @@
     private UserManager<AppUser> _userManager { get; set; } = default!;
     [Inject] private IdentityAuthenticationService _authenticationService { get; set; } = default!;
     [Inject] private ILogger<Login> _logger { get; set; } = default!;
-    
+
     private LoginFormDto _model = new()
     {
         UserName = "admin",
@@ -83,8 +76,6 @@
         RememberMe = true
     };
 
-    MudForm? _form;
-    bool _success;
     bool _loading;
     bool PasswordVisibility;
     InputType PasswordInput = InputType.Password;
@@ -118,7 +109,7 @@
         {
             _loading = true;
             var user = await _userManager.FindByNameAsync(_model.UserName);
-            
+
             if (user is null)
             {
                 _snackbar.Add("No user found, or no authorization, please contact the administrator", MudBlazor.Severity.Error);
@@ -152,33 +143,35 @@
     private async Task OnResetPassword(AppUser item)
     {
         var model = new ResetPasswordFormDto()
-            {
-                Id = item.Id,
-                DisplayName = item.DisplayName,
-                UserName = item.UserName
-            };
+        {
+            Id = item.Id,
+            UserName = item.UserName
+        };
 
-        var parameters = new DialogParameters { ["model"] = model };
+        var parameters = new DialogParameters();
+        parameters.Add("model", model);
+
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
-        //var dialog = DialogService.Show<_ResetPasswordDialog>("Set new password", parameters, options);
+        var dialog = _dialog.Show<ResetPasswordModal>("Set new password", parameters, options);
 
-        //var result = await dialog.Result;
-        //if (!result.Cancelled)
-        //{
-        //    var token = await _userManager.GeneratePasswordResetTokenAsync(item);
-        //    var state = await _userManager.ResetPasswordAsync(item, token, model.Password);
-        //    if (state.Succeeded)
-        //    {
-        //        item.IsActive = true;
-        //        await _userManager.UpdateAsync(item);
-        //        _snackbar.Add("Password update successfuly", MudBlazor.Severity.Info);
-        //        _logger.LogInformation("{@UserName} has set a new password", model.UserName);
-        //        _model.Password = "";
-        //    }
-        //    else
-        //    {
-        //        _snackbar.Add($"{string.Join(",", (state.Errors.Select(x => x.Description).ToArray()))}", MudBlazor.Severity.Error);
-        //    }
-        //}
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(item);
+            var state = await _userManager.ResetPasswordAsync(item, token, model.Password);
+            if (state.Succeeded)
+            {
+                item.IsActive = true;
+                await _userManager.UpdateAsync(item);
+                _snackbar.Add("Password update successfuly", MudBlazor.Severity.Info);
+                _logger.LogInformation("{@UserName} has set a new password", model.UserName);
+
+                _navManager.NavigateTo("/");
+            }
+            else
+            {
+                _snackbar.Add($"{string.Join(",", (state.Errors.Select(x => x.Description).ToArray()))}", MudBlazor.Severity.Error);
+            }
+        }
     }
 }

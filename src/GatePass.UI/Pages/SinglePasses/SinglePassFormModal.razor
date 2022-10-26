@@ -69,6 +69,7 @@
 
 @code {
     [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+    [Inject] ProfileService _profileService { get; set; } = default!;
 
     [Parameter] public Guid VisitorId { get; set; }
     [Parameter] public SinglePass? SinglePass { get; set; }
@@ -127,7 +128,8 @@
                 purpose: model.Purpose,
                 officerToVisit: model.OfficerToVisit,
                 department: model.Department,
-                noOfCompanions: model.NoOfCompanions
+                noOfCompanions: model.NoOfCompanions,
+                locationId: _profileService.Profile.LocationId
             ));
 
          await _repo.SaveChangesAsync();

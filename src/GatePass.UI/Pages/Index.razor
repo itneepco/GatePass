@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Security.Claims
 @attribute [Authorize]
 
 @inject IReadRepository<Visitor> _vistorRepo;
@@ -6,24 +7,27 @@
 @inject IReadRepository<SinglePass> _singlePassRepo;
 @inject IReadRepository<MultiplePass> _multiPassRepo;
 
-<MudGrid Class="d-flex flex-row justify-end">
-    <MudItem xs="6" md="3">
-        <MudSelect T="Guid"
+@if (currentUser.IsInRole("Admin"))
+{
+    <MudGrid Class="d-flex flex-row justify-end">
+        <MudItem xs="6" md="3">
+            <MudSelect T="Guid"
                    Label="Select Location"
                    Variant="Variant.Outlined"
                    Margin="Margin.Dense"
                    TextChanged="OnItemSelected"
                    AnchorOrigin="Origin.BottomCenter">
 
-            <MudSelectItem Value="@(Guid.Empty)">All locations</MudSelectItem>
-            
-            @foreach (var location in locations)
-            {
-                <MudSelectItem Value="@location.Id">@location.Name</MudSelectItem>
-            }
-        </MudSelect>
-    </MudItem>
-</MudGrid>
+                <MudSelectItem Value="@(Guid.Empty)">All locations</MudSelectItem>
+
+                @foreach (var location in locations)
+                {
+                    <MudSelectItem Value="@location.Id">@location.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+}
 
 <MudGrid Style="margin-top: 0.15rem">
     <MudItem xs="6" md="3">
@@ -98,8 +102,16 @@
     List<Location> locations = new();
     Guid locationId = Guid.Empty;
 
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
+
+    ClaimsPrincipal currentUser = default!;
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await authenticationStateTask;
+        currentUser = authState.User;
+
         visitorCount = await _vistorRepo.CountAsync();
         locationCount = await _locationRepo.CountAsync();
         singlePassCount = await _singlePassRepo.CountAsync();
@@ -113,7 +125,6 @@
     }
 
     int charIndex;
-
     public List<ChartSeries> Series = new List<ChartSeries>()
     {
         new ChartSeries() { Name = "Single Day Pass", Data = new double[] { 40, 20, 25, 27, 46, 60, 48, 80, 15, 99, 70 ,65 } },

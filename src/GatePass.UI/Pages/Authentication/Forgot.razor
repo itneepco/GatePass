@@ -1,0 +1,184 @@
+﻿@page "/authentication/forgot-password"
+@attribute [AllowAnonymous]
+@inherits OwningComponentBase
+
+@using GatePass.Core.Identity
+@using GatePass.Core.Interfaces
+
+
+<PageTitle>@Title</PageTitle>
+<AuthorizeView>
+    <NotAuthorized Context="Auth">
+        <MudText Typo="Typo.h4" GutterBottom="true">Forgot Password?</MudText>
+        @if (_step == 1)
+        {
+            <MudText Typo="Typo.subtitle2">Enter the email address linked to your account and you will recieve an email containing a token string to reset your password.</MudText>
+            <MudTextField T="string" @bind-Value="@_emailaddress" 
+                          Label="Email" Variant="Variant.Outlined" Class="my-4"/>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" Size="Size.Large" 
+                       FullWidth="true" Class="mt-3" 
+                       Disabled="@(string.IsNullOrEmpty(_emailaddress) || _sending )" 
+                       OnClick="@(()=> ResetPassword())">
+
+                @if (_sending)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Waiting</MudText>
+                }
+                else
+                {
+                    <MudText>Reset Password</MudText>
+                }
+            </MudButton>
+        }
+        else if (_step == 2 && _resetpasswordToken != string.Empty)
+        {
+            <MudText Typo="Typo.subtitle2">"Enter the token string from the recovery email to set your new password.</MudText>
+            <MudTextField T="string"
+                      @bind-Value="@_inputToken"
+                      Label="Token String"
+                      HelperText="The input token string must be equal to the token string in the recovery email"
+                      Variant="Variant.Outlined"
+                      Class="my-4"></MudTextField>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       Size="Size.Large" 
+                       FullWidth="true" Class="mt-3" 
+                       Disabled="@(_inputToken != _resetpasswordToken || _sending )" 
+                       OnClick="@(()=> SetNewPassword())">
+                @if (_sending)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Waiting</MudText>
+                }
+                else
+                {
+                    <MudText>Set New Password</MudText>
+                }
+            </MudButton>
+        }
+    </NotAuthorized>
+    <Authorized>
+        <RedirectToHome></RedirectToHome>
+        <MudAlert Severity="MudBlazor.Severity.Info" Class="mt-8 mud-width-full" Style="max-width:500px;">You are already logged in.</MudAlert>
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    public string Title = "Forgot Password";
+    private int _step = 1;
+    private string _emailaddress = string.Empty;
+    private bool _sending = false;
+    private string _resetpasswordToken = string.Empty;
+    private string _inputToken = string.Empty;
+
+    private AppUser? _user = null;
+    private UserManager<AppUser> _userManager { get; set; } = null!;
+
+    [Inject] private ILogger<Forgot> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private IEmailSender _emailSender { get; set; } = default!;
+
+    protected override Task OnInitializedAsync()
+    {
+        Title = "Forgot Password";
+        _userManager = ScopedServices.GetRequiredService<UserManager<AppUser>>();
+        return base.OnInitializedAsync();
+    }
+
+    private async Task ResetPassword()
+    {
+        try
+        {
+            _sending = true;
+            _user = await _userManager.FindByEmailAsync(_emailaddress);
+            if (_user is null)
+            {
+                _snackbar.Add("No user found by email, please contact the administrator", MudBlazor.Severity.Error);
+                return;
+            }
+            _resetpasswordToken = await _userManager.GeneratePasswordResetTokenAsync(_user);
+            var response = await SendResetPasswordToken(_emailaddress, _user.UserName, _resetpasswordToken);
+            if (response)
+            {
+                _step = 2;
+                _snackbar.Clear();
+                _snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+                _snackbar.Add(string.Format("The email has been sent, please check the email: {0} ", _emailaddress), MudBlazor.Severity.Success, config => { config.ShowCloseIcon = false; config.HideTransitionDuration = 5000; });
+                _logger.LogInformation("{@UserName}'s token: {@token} for resetting the password has been sent.", _user.UserName, _resetpasswordToken);
+            }
+            else
+            {
+                _snackbar.Add("Email not send, please contact the administrator", MudBlazor.Severity.Error);
+            }
+        }
+        catch (Exception e)
+        {
+            _snackbar.Add(string.Format("{0}, please contact the administrator", e.Message), MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private Task<bool> SendResetPasswordToken(string toemail, string userName, string token)
+    {
+        var subject = "Verify your recovery email";
+        var body = $"Hi! Your password token is: {token}";
+
+        return _emailSender.SendEmailAsync(toemail, "from", subject, body);
+    }
+
+
+    private async Task SetNewPassword()
+    {
+        try
+        {
+            _sending = true;
+            if (_user is null || _inputToken == string.Empty)
+            {
+                return;
+            }
+            var model = new ResetPasswordFormDto()
+            { 
+                Id = _user.Id, 
+                UserName = _user.UserName, 
+            };
+
+            var parameters = new DialogParameters();
+            parameters.Add("model", model);
+            
+            var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraSmall };
+            var dialog = _dialog.Show<ResetPasswordModal>("Set a new password", parameters, options);
+            var result = await dialog.Result;
+            
+            if (!result.Cancelled)
+            {
+                var state = await _userManager.ResetPasswordAsync(_user, _inputToken, model.Password);
+                if (state.Succeeded)
+                {
+                    _user.IsActive = true;
+                    await _userManager.UpdateAsync(_user);
+                    _snackbar.Add("The new password has been set successfully, please login again", MudBlazor.Severity.Info);
+                    _logger.LogInformation("{@UserName} has set a new password", model.UserName);
+                    _navigation.NavigateTo("/");
+                }
+                else
+                {
+                    _snackbar.Add($"{string.Join(",", (state.Errors.Select(x => x.Description).ToArray()))}", MudBlazor.Severity.Error);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            _snackbar.Add(string.Format("{0}, please contact the administrator", e.Message), MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+}

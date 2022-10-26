@@ -1,4 +1,5 @@
 ﻿@using GatePass.Core.PassAggregate
+@using System.Security.Claims
 
 @inject IRepository<MultiplePass> _repo;
 
@@ -44,6 +45,8 @@
 
 @code {
     [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
+
+    [Inject] ProfileService _profileService { get; set; } = default!;
 
     [Parameter] public Guid VisitorId { get; set; }
     [Parameter] public MultiplePass? MultiPass { get; set; }
@@ -93,7 +96,8 @@
                 fromDate: model.FromDate!.Value,
                 tillDate: model.TillDate!.Value,
                 department: model.Department,
-                purpose: model.Purpose
+                purpose: model.Purpose,
+                locationId: _profileService.Profile.LocationId
             ));
 
         await _repo.SaveChangesAsync();

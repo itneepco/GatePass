@@ -1,7 +1,5 @@
-﻿using System.Threading.Tasks;
-
-namespace GatePass.Core.Interfaces;
+﻿namespace GatePass.Core.Interfaces;
 public interface IEmailSender
 {
-  Task SendEmailAsync(string to, string from, string subject, string body);
+  Task<bool> SendEmailAsync(string to, string from, string subject, string body);
 }

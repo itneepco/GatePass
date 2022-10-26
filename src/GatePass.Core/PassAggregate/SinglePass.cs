@@ -2,6 +2,7 @@
 using GatePass.SharedKernel.Interfaces;
 using GatePass.SharedKernel;
 using Ardalis.GuardClauses;
+using GatePass.Core.LocationAggregate;
 
 namespace GatePass.Core.PassAggregate;
 
@@ -16,6 +17,8 @@ public class SinglePass : EntityBase, IAggregateRoot
     public int NoOfCompanions { get; private set; }
     public Guid VisitorId { get; private set; }
     public Visitor? Visitor { get; private set; }
+    public Guid LocationId { get; set; }
+    public Location? Location { get; set; }
 
     public SinglePass()
     {
@@ -28,7 +31,8 @@ public class SinglePass : EntityBase, IAggregateRoot
         string purpose, 
         string officerToVisit, 
         string department,
-        int noOfCompanions)
+        int noOfCompanions,
+        Guid locationId)
     {
         VisitorId = visitorId;
         SetVisitDate(visitDate);
@@ -38,6 +42,7 @@ public class SinglePass : EntityBase, IAggregateRoot
         SetDepartment(department);
         SetPurpose(purpose);
         SetNoOfCompanions(noOfCompanions);
+        SetLocationId(locationId);
     }
 
     public void SetOfficerToVisit(string officerToVisit)
@@ -72,5 +77,10 @@ public class SinglePass : EntityBase, IAggregateRoot
     public void SetOutTime(TimeSpan outTime)
     {
         OutTime = Guard.Against.Null(outTime, nameof(outTime));
+    }
+
+    public void SetLocationId(Guid locationId)
+    {
+        LocationId = Guard.Against.Null(locationId, nameof(locationId));
     }
 }
