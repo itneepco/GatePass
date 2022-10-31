@@ -15,12 +15,13 @@
     <ToolBarContent>
         <MudButton OnClick="() => AddSinglePass()" Variant="Variant.Filled" Color="Color.Primary">Add Pass</MudButton>
         <MudSpacer />
+
+        <MudSwitch Label="Exit Pending" Color="Color.Info" @bind-Checked="exitPending" />
         <MudTextField @bind-Value="searchString"
-                      Placeholder="Search by visitor name, phone no or department"
+                      Placeholder="Search by Visitor name, Phone No. or Department"
                       Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      IconSize="Size.Medium"
-                      Class="mt-0" />
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"/>
         <MudButton OnClick="@SearchVisitors"
                    Variant="Variant.Filled"
                    Class="ml-2"
@@ -49,7 +50,9 @@
         <MudTd DataLabel="Officer To Visit">@context.OfficerToVisit</MudTd>
         <MudTd DataLabel="Department">@context.Department</MudTd>
         <MudTd DataLabel="In Time">@context.InTime.ToString(@"hh\:mm")</MudTd>
-        <MudTd DataLabel="Out Time">@context.OutTime.ToString(@"hh\:mm")</MudTd>
+        <MudTd DataLabel="Out Time">
+            @(context.OutTime.Equals(TimeSpan.Zero) ? "_ _" : context.OutTime.ToString(@"hh\:mm"))
+        </MudTd>
         <MudTd DataLabel="Actions">
             <SinglePassAction SinglePass="@context" OnPassUpdate="ReloadTable" />
         </MudTd>
@@ -63,6 +66,7 @@
     int pageIndex;
     MudTable<SinglePass>? table;
     string searchString = string.Empty;
+    bool exitPending = false;
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
@@ -78,14 +82,25 @@
     async Task<TableData<SinglePass>> ReloadSinglePasses(TableState state)
     {
         List<SinglePass> singlePasses = new();
-        
+
         if(currentUser.IsInRole("Admin")) { //fetch all visitors
-            var spec = new SinglePassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
+            var spec = new SinglePassWithVisitorPaginationSpec(
+                state.Page, 
+                state.PageSize, 
+                searchString, 
+                exitPending
+            );
             singlePasses = await _repo.ListAsync(spec);
         }
         else //fetch visitors based on locationId
         { 
-            var spec = new SinglePassWithVisitorByLocationIdPaginationSpec(currentUser.GetLocationId(), state.Page, state.PageSize, searchString);
+            var spec = new SinglePassWithVisitorByLocationIdPaginationSpec(
+                currentUser.GetLocationId(), 
+                state.Page, 
+                state.PageSize, 
+                searchString, 
+                exitPending
+            );
             singlePasses = await _repo.ListAsync(spec);
         }
 
@@ -121,7 +136,7 @@
 
     string GetPhotoUrl(string? photoName) {
         if(String.IsNullOrEmpty(photoName)) {
-            return "photos/placeholder.jpeg";
+            return "photos/placeholder.jpg";
         }
 
         return $"photos/{photoName}";

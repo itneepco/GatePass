@@ -73,6 +73,7 @@
         if (!result.Cancelled)
         {
             await _authenticationService.Logout();
+            _navManager.NavigateTo("/");
         }
     }
 }

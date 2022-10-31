@@ -1,5 +1,7 @@
 ﻿@page "/"
 @using System.Security.Claims
+@using GatePass.Core.PassAggregate.Specifications
+@using GatePass.UI.Extensions
 @attribute [Authorize]
 
 @inject IReadRepository<Visitor> _vistorRepo;
@@ -7,52 +9,57 @@
 @inject IReadRepository<SinglePass> _singlePassRepo;
 @inject IReadRepository<MultiplePass> _multiPassRepo;
 
-@if (currentUser.IsInRole("Admin"))
-{
-    <MudGrid Class="d-flex flex-row justify-end">
-        <MudItem xs="6" md="3">
-            <MudSelect T="Guid"
-                   Label="Select Location"
-                   Variant="Variant.Outlined"
-                   Margin="Margin.Dense"
-                   TextChanged="OnItemSelected"
-                   AnchorOrigin="Origin.BottomCenter">
 
-                <MudSelectItem Value="@(Guid.Empty)">All locations</MudSelectItem>
-
-                @foreach (var location in locations)
-                {
-                    <MudSelectItem Value="@location.Id">@location.Name</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-    </MudGrid>
-}
 
 <MudGrid Style="margin-top: 0.15rem">
-    <MudItem xs="6" md="3">
-        <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
-            <MudIcon Icon="@Icons.Material.Filled.LocationCity" Size="Size.Large" />
-            <div class="d-flex flex-column align-center justify-center">
-                <MudText Typo="Typo.body2">Total Locations</MudText>
-                <MudText Typo="Typo.h4">@locationCount</MudText>
-            </div>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="6" md="3">
-        <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
-            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
-            <div class="d-flex flex-column align-center justify-center">
-                <MudText Typo="Typo.body2">Total Visitors</MudText>
-                <MudText Typo="Typo.h4">@visitorCount</MudText>
-            </div>
-        </MudPaper>
-    </MudItem>
+    @if (currentUser.IsInRole("Admin"))
+    {
+        <MudItem xs="6" md="3">
+            <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
+                <MudIcon Icon="@Icons.Material.Filled.LocationCity" Size="Size.Large" />
+                <div class="d-flex flex-column align-center justify-center">
+                    <MudText Typo="Typo.body2">Total Locations</MudText>
+                    <MudText Typo="Typo.h4">@locationCount</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" md="3">
+            <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                <div class="d-flex flex-column align-center justify-center">
+                    <MudText Typo="Typo.body2">Total Visitors</MudText>
+                    <MudText Typo="Typo.h4">@visitorCount</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+    }
+    else
+    {
+        <MudItem xs="6" md="3">
+            <MudPaper Class="d-flex align-center justify-space-around px-4  py-8">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                <div class="d-flex flex-column align-center justify-center">
+                    <MudText Typo="Typo.body2">Today's Visitor</MudText>
+                    <MudText Typo="Typo.h4">@todaysCount</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="6" md="3">
+            <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
+                <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Large" />
+                <div class="d-flex flex-column align-center justify-center">
+                    <MudText Typo="Typo.body2">Today's Exit Pending</MudText>
+                    <MudText Typo="Typo.h4">@todaysExitPending</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+    }
+
     <MudItem xs="6" md="3">
         <MudPaper Class="d-flex align-center justify-space-around px-4  py-8">
             <MudIcon Icon="@Icons.Material.Filled.Foundation" Size="Size.Large" />
             <div class="d-flex flex-column align-center justify-center">
-                <MudText Typo="Typo.body2">Single Day Pass</MudText>
+                <MudText Typo="Typo.body2">Total Single Pass</MudText>
                 <MudText Typo="Typo.h4">@singlePassCount</MudText>
             </div>
         </MudPaper>
@@ -61,7 +68,7 @@
         <MudPaper Class="d-flex align-center justify-space-around px-4 py-8">
             <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Large" />
             <div class="d-flex flex-column align-center justify-center">
-                <MudText Typo="Typo.body2">Multiple Day Pass</MudText>
+                <MudText Typo="Typo.body2">Total Multi Pass</MudText>
                 <MudText Typo="Typo.h4">@multiPassCount</MudText>
             </div>
         </MudPaper>
@@ -99,8 +106,8 @@
     int locationCount;
     int singlePassCount;
     int multiPassCount;
-    List<Location> locations = new();
-    Guid locationId = Guid.Empty;
+    int todaysCount;
+    int todaysExitPending;
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; } = default!;
@@ -112,16 +119,22 @@
         var authState = await authenticationStateTask;
         currentUser = authState.User;
 
-        visitorCount = await _vistorRepo.CountAsync();
-        locationCount = await _locationRepo.CountAsync();
-        singlePassCount = await _singlePassRepo.CountAsync();
-        multiPassCount = await _multiPassRepo.CountAsync();
+        if (currentUser.IsInRole("Admin"))
+        {
+            visitorCount = await _vistorRepo.CountAsync();
+            locationCount = await _locationRepo.CountAsync();
+            singlePassCount = await _singlePassRepo.CountAsync();
+            multiPassCount = await _multiPassRepo.CountAsync();
+        }
+        else 
+        {
+            var locationId = currentUser.GetLocationId();
+            singlePassCount = await _singlePassRepo.CountAsync(new SinglePassByLocationIdSpec(locationId));
+            multiPassCount = await _multiPassRepo.CountAsync(new MultiPassByLocationIdSpec(locationId));
 
-        locations = await _locationRepo.ListAsync();
-    }
-
-    void OnItemSelected(string args) {
-        locationId = Guid.Parse(args);
+            todaysCount = await _singlePassRepo.CountAsync(new SinglePassByLocationIdAndDateSpec(locationId, DateTime.Today));
+            todaysExitPending = await _singlePassRepo.CountAsync(new SinglePassExitPendingByLocationIdSpec(locationId));
+        }
     }
 
     int charIndex;

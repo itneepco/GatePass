@@ -68,7 +68,9 @@ public class GeneratePDFService : IGeneratePDFService
         document.Add(createParagraphWithTab("No of Companions: ", singlePass.NoOfCompanions.ToString()));
 
         document.Add(createParagraphWithTab("Visit Date: ", singlePass.VisitDate.ToString("dd MMMM yyyy")));
-        document.Add(createParagraphWithTab("In Time & Out Time: ", singlePass.InTime.ToString(@"hh\:mm"), singlePass.OutTime.ToString(@"hh\:mm")));
+
+        var outTime = singlePass.OutTime.Equals(TimeSpan.Zero) ? "_ _" : singlePass.OutTime.ToString(@"hh\:mm");
+        document.Add(createParagraphWithTab("In Time & Out Time: ", singlePass.InTime.ToString(@"hh\:mm"), outTime));
 
         var signature = new Paragraph("Signature of the Officer Visited")
                             .SetTextAlignment(TextAlignment.RIGHT)
@@ -80,7 +82,7 @@ public class GeneratePDFService : IGeneratePDFService
         var visitorImageUrl = System.IO.Path.Combine(
                 _appEnvironment.WebRootPath, 
                 "photos", 
-                singlePass.Visitor!.PhotoName!);
+                singlePass.Visitor!.PhotoName ?? "placeholder.jpg");
 
         Image visitorImage = new Image(ImageDataFactory.Create(visitorImageUrl))
                         .SetWidth(120)
@@ -181,7 +183,7 @@ public class GeneratePDFService : IGeneratePDFService
         p.Add(key);
         p.Add(new Tab());
         p.Add(value1);
-        if (value2 != null && value2.Equals("00.00"))
+        if (value2 != null)
         {
             p.Add(new Tab());
             p.Add(value2);
