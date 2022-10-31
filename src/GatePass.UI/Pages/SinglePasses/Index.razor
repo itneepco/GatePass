@@ -84,7 +84,7 @@
         List<SinglePass> singlePasses = new();
 
         if(currentUser.IsInRole("Admin")) { //fetch all visitors
-            var spec = new SinglePassWithVisitorPaginationSpec(
+            var spec = new SinglePassWithVisitorAndLocationPaginationSpec(
                 state.Page, 
                 state.PageSize, 
                 searchString, 
@@ -94,7 +94,7 @@
         }
         else //fetch visitors based on locationId
         { 
-            var spec = new SinglePassWithVisitorByLocationIdPaginationSpec(
+            var spec = new SinglePassWithVisitorAndLocationByLocationIdPaginationSpec(
                 currentUser.GetLocationId(), 
                 state.Page, 
                 state.PageSize, 

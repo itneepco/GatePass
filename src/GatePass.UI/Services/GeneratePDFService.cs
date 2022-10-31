@@ -27,15 +27,15 @@ public class GeneratePDFService : IGeneratePDFService
         Document document = new Document(pdfDoc, PageSize.A5.Rotate(), false);
         writer.SetCloseStream(false);
 
-        Paragraph header = new Paragraph("North Eastern Electric Power Corporation")
+        Paragraph header = new Paragraph($"NEEPCO, {singlePass.Location?.Name}")
           .SetTextAlignment(TextAlignment.CENTER)
-          .SetFontSize(20);
+          .SetFontSize(18);
 
         document.Add(header);
 
         Paragraph subheader = new Paragraph("Single Day Pass")
           .SetTextAlignment(TextAlignment.CENTER)
-          .SetFontSize(15);
+          .SetFontSize(14);
         document.Add(subheader);
 
         // Adding logo to the pdf file
@@ -58,10 +58,10 @@ public class GeneratePDFService : IGeneratePDFService
         // empty line
         document.Add(new Paragraph(""));
 
-        var fullName = singlePass.Visitor!.FirstName + " " + singlePass.Visitor!.LastName;
+        var fullName = singlePass.Visitor?.FirstName + " " + singlePass.Visitor?.LastName;
         document.Add(createParagraphWithTab("Visitor Name: ", fullName));
-        document.Add(createParagraphWithTab("Phone No: ", singlePass.Visitor!.Phone));
-        document.Add(createParagraphWithTab("Visitor Address: ", singlePass.Visitor!.Address));
+        document.Add(createParagraphWithTab("Phone No: ", singlePass.Visitor?.Phone));
+        document.Add(createParagraphWithTab("Visitor Address: ", singlePass.Visitor?.Address));
 
         document.Add(createParagraphWithTab("Officer To Visit: ", singlePass.OfficerToVisit));
         document.Add(createParagraphWithTab("Department: ", singlePass.Department));
@@ -82,7 +82,7 @@ public class GeneratePDFService : IGeneratePDFService
         var visitorImageUrl = System.IO.Path.Combine(
                 _appEnvironment.WebRootPath, 
                 "photos", 
-                singlePass.Visitor!.PhotoName ?? "placeholder.jpg");
+                singlePass.Visitor?.PhotoName ?? "placeholder.jpg");
 
         Image visitorImage = new Image(ImageDataFactory.Create(visitorImageUrl))
                         .SetWidth(120)
@@ -108,15 +108,15 @@ public class GeneratePDFService : IGeneratePDFService
         Document document = new Document(pdfDoc, PageSize.A5.Rotate(), false);
         writer.SetCloseStream(false);
 
-        Paragraph header = new Paragraph("North Eastern Electric Power Corporation")
+        Paragraph header = new Paragraph($"NEEPCO, {multiplePass.Location?.Name}")
           .SetTextAlignment(TextAlignment.CENTER)
-          .SetFontSize(20);
+          .SetFontSize(18);
 
         document.Add(header);
 
         Paragraph subheader = new Paragraph("Multiple Day Pass")
           .SetTextAlignment(TextAlignment.CENTER)
-          .SetFontSize(15);
+          .SetFontSize(14);
         document.Add(subheader);
 
         // Adding logo to the pdf file
@@ -139,10 +139,10 @@ public class GeneratePDFService : IGeneratePDFService
         // empty line
         document.Add(new Paragraph(""));
 
-        var fullName = multiplePass.Visitor!.FirstName + " " + multiplePass.Visitor!.LastName;
+        var fullName = multiplePass.Visitor?.FirstName + " " + multiplePass.Visitor?.LastName;
         document.Add(createParagraphWithTab("Visitor Name: ", fullName));
-        document.Add(createParagraphWithTab("Phone No: ", multiplePass.Visitor!.Phone));
-        document.Add(createParagraphWithTab("Visitor Address: ", multiplePass.Visitor!.Address));
+        document.Add(createParagraphWithTab("Phone No: ", multiplePass.Visitor?.Phone));
+        document.Add(createParagraphWithTab("Visitor Address: ", multiplePass.Visitor?.Address));
 
         document.Add(createParagraphWithTab("From Date: ", multiplePass.FromDate.ToString("dd MMM yyyy")));
         document.Add(createParagraphWithTab("End Date: ", multiplePass.TillDate.ToString("dd MMM yyyy")));
@@ -153,7 +153,7 @@ public class GeneratePDFService : IGeneratePDFService
         var visitorImageUrl = System.IO.Path.Combine(
                 _appEnvironment.WebRootPath,
                 "photos",
-                multiplePass.Visitor!.PhotoName!);
+                multiplePass.Visitor?.PhotoName!);
 
         Image visitorImage = new Image(ImageDataFactory.Create(visitorImageUrl))
                         .SetWidth(120)
@@ -176,7 +176,7 @@ public class GeneratePDFService : IGeneratePDFService
         return byteInfo;
     }
 
-    private static Paragraph createParagraphWithTab(string key, string value1, string value2 = null)
+    private static Paragraph createParagraphWithTab(string key, string? value1, string? value2 = null)
     {
         Paragraph p = new Paragraph();
         p.AddTabStops(new TabStop(200f, TabAlignment.LEFT));

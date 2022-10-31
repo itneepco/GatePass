@@ -2,14 +2,15 @@
 
 namespace GatePass.Core.PassAggregate.Specifications
 {
-    public class SinglePassWithVisitorPaginationSpec : Specification<SinglePass>
+    public class SinglePassWithVisitorAndLocationPaginationSpec : Specification<SinglePass>
     {
-        public SinglePassWithVisitorPaginationSpec(int pageIndex, int pageSize, string searchString, bool exitPending = false)
+        public SinglePassWithVisitorAndLocationPaginationSpec(int pageIndex, int pageSize, string searchString, bool exitPending = false)
         {
             if (exitPending)
             {
                 Query
                 .Include(p => p.Visitor)
+                .Include(p => p.Location)
                 .Where(p =>
                     (p.Department.ToLower().Contains(searchString.ToLower()) ||
                     p.Visitor!.FirstName.ToLower().Contains(searchString.ToLower()) ||
@@ -26,6 +27,7 @@ namespace GatePass.Core.PassAggregate.Specifications
             {
                 Query
                 .Include(p => p.Visitor)
+                .Include(p => p.Location)
                 .Where(p =>
                     p.Department.ToLower().Contains(searchString.ToLower()) ||
                     p.Visitor!.FirstName.ToLower().Contains(searchString.ToLower()) ||

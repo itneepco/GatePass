@@ -2,12 +2,13 @@
 
 namespace GatePass.Core.PassAggregate.Specifications;
 
-public class MultiPassWithVisitorPaginationSpec : Specification<MultiplePass>
+public class MultiPassWithVisitorAndLocationPaginationSpec : Specification<MultiplePass>
 {
-	public MultiPassWithVisitorPaginationSpec(int pageIndex, int pageSize, string searchString)
+	public MultiPassWithVisitorAndLocationPaginationSpec(int pageIndex, int pageSize, string searchString)
 	{
         Query
             .Include(p => p.Visitor)
+            .Include(p => p.Location)
             .Where(p =>
                 p.Department.ToLower().Contains(searchString.ToLower()) ||
                 p.Visitor!.FirstName.ToLower().Contains(searchString.ToLower()) ||

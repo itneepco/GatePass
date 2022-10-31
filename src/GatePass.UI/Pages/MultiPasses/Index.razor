@@ -79,12 +79,12 @@
 
         if (currentUser.IsInRole("Admin"))
         { //fetch all visitors
-            var spec = new MultiPassWithVisitorPaginationSpec(state.Page, state.PageSize, searchString);
+            var spec = new MultiPassWithVisitorAndLocationPaginationSpec(state.Page, state.PageSize, searchString);
             multiPasses = await _repo.ListAsync(spec);
         }
         else //fetch visitors based on locationId
         {
-            var spec = new MultiPassWithVisitorByLocationIdPaginationSpec(currentUser.GetLocationId(), state.Page, state.PageSize, searchString);
+            var spec = new MultiPassWithVisitorAndLocationByLocationIdPaginationSpec(currentUser.GetLocationId(), state.Page, state.PageSize, searchString);
             multiPasses = await _repo.ListAsync(spec);
         }
         var totalCount = await _repo.CountAsync();
