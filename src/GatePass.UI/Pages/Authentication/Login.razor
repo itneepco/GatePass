@@ -33,7 +33,7 @@
                              Color="Color.Primary"
                              Class="ml-n1 my-3" />
 
-                <MudLink Href="/authentication/forgot-password">Forgot password?</MudLink>
+                @*<MudLink Href="/authentication/forgot-password">Forgot password?</MudLink>*@
             </div>
 
 
@@ -69,12 +69,7 @@
     [Inject] private IdentityAuthenticationService _authenticationService { get; set; } = default!;
     [Inject] private ILogger<Login> _logger { get; set; } = default!;
 
-    private LoginFormDto _model = new()
-    {
-        UserName = "admin",
-        Password = "Pass@123",
-        RememberMe = true
-    };
+    private LoginFormDto _model = new();
 
     bool _loading;
     bool PasswordVisibility;

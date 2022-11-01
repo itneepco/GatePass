@@ -19,7 +19,7 @@ StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configurat
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.UseSerilog((_, config) => config.ReadFrom.Configuration(builder.Configuration));
 
-string connectionString = builder.Configuration.GetConnectionString("SqliteConnection");
+string connectionString = builder.Configuration.GetConnectionString("MySQLConnection");
 builder.Services.AddDbContext(connectionString);
 
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
@@ -49,9 +49,9 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseAuthentication();

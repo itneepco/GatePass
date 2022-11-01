@@ -29,7 +29,7 @@ namespace GatePass.UI.Pages.Visitors
                 return;
             }
 
-            visitorPhoto = $"/Photos/{visitor.PhotoName}";
+            visitorPhoto = $"/photos/{visitor.PhotoName}";
             editUrl = $"visitors/upsert/{visitor.Id}";
         }
 

@@ -171,6 +171,7 @@
         visitorDb.SetPhone(model.Phone);
         visitorDb.SetIdentificationType(model.IdentificationType);
         visitorDb.SetIdentificationNo(model.IdentificationNo);
+        visitorDb.SetAddress(model.Address);
         visitorDb.SetPhotoName(fileName);
 
         await _repo.SaveChangesAsync();

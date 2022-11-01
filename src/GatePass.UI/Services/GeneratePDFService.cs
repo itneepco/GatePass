@@ -27,6 +27,8 @@ public class GeneratePDFService : IGeneratePDFService
         Document document = new Document(pdfDoc, PageSize.A5.Rotate(), false);
         writer.SetCloseStream(false);
 
+        document.SetTopMargin(14);
+
         Paragraph header = new Paragraph($"NEEPCO, {singlePass.Location?.Name}")
           .SetTextAlignment(TextAlignment.CENTER)
           .SetFontSize(18);
@@ -42,9 +44,9 @@ public class GeneratePDFService : IGeneratePDFService
         var logoUrl = System.IO.Path.Combine(_appEnvironment.WebRootPath, "logo.png");
 
         Image logo = new Image(ImageDataFactory.Create(logoUrl))
-                        .SetWidth(45)
-                        .SetHeight(45)
-                        .SetFixedPosition(30, 340);
+                        .SetWidth(50)
+                        .SetHeight(50)
+                        .SetFixedPosition(30, 350);
 
         document.Add(logo);
 
@@ -58,10 +60,22 @@ public class GeneratePDFService : IGeneratePDFService
         // empty line
         document.Add(new Paragraph(""));
 
+        // Adding visitor image to the pdf
+        var visitorImageUrl = System.IO.Path.Combine(
+                _appEnvironment.WebRootPath,
+                "photos",
+                singlePass.Visitor?.PhotoName ?? "placeholder.jpg");
+
+        Image visitorImage = new Image(ImageDataFactory.Create(visitorImageUrl))
+                        .SetWidth(120)
+                        .SetHeight(110)
+                        .SetFixedPosition(430, 215);
+
+        document.Add(visitorImage);
+
         var fullName = singlePass.Visitor?.FirstName + " " + singlePass.Visitor?.LastName;
         document.Add(createParagraphWithTab("Visitor Name: ", fullName));
         document.Add(createParagraphWithTab("Phone No: ", singlePass.Visitor?.Phone));
-        document.Add(createParagraphWithTab("Visitor Address: ", singlePass.Visitor?.Address));
 
         document.Add(createParagraphWithTab("Officer To Visit: ", singlePass.OfficerToVisit));
         document.Add(createParagraphWithTab("Department: ", singlePass.Department));
@@ -72,24 +86,13 @@ public class GeneratePDFService : IGeneratePDFService
         var outTime = singlePass.OutTime.Equals(TimeSpan.Zero) ? "_ _" : singlePass.OutTime.ToString(@"hh\:mm");
         document.Add(createParagraphWithTab("In Time & Out Time: ", singlePass.InTime.ToString(@"hh\:mm"), outTime));
 
+        document.Add(createParagraphWithTab("Visitor Address: ", singlePass.Visitor?.Address));
+
         var signature = new Paragraph("Signature of the Officer Visited")
                             .SetTextAlignment(TextAlignment.RIGHT)
                             .SetMarginTop(30);
 
         document.Add(signature);
-
-        // Adding visitor image to the pdf
-        var visitorImageUrl = System.IO.Path.Combine(
-                _appEnvironment.WebRootPath, 
-                "photos", 
-                singlePass.Visitor?.PhotoName ?? "placeholder.jpg");
-
-        Image visitorImage = new Image(ImageDataFactory.Create(visitorImageUrl))
-                        .SetWidth(120)
-                        .SetHeight(110)
-                        .SetFixedPosition(430, 190);
-
-        document.Add(visitorImage);
 
         document.Close();
         byte[] byteInfo = ms.ToArray();
@@ -108,6 +111,8 @@ public class GeneratePDFService : IGeneratePDFService
         Document document = new Document(pdfDoc, PageSize.A5.Rotate(), false);
         writer.SetCloseStream(false);
 
+        document.SetTopMargin(14);
+
         Paragraph header = new Paragraph($"NEEPCO, {multiplePass.Location?.Name}")
           .SetTextAlignment(TextAlignment.CENTER)
           .SetFontSize(18);
@@ -123,9 +128,9 @@ public class GeneratePDFService : IGeneratePDFService
         var logoUrl = System.IO.Path.Combine(_appEnvironment.WebRootPath, "logo.png");
 
         Image logo = new Image(ImageDataFactory.Create(logoUrl))
-                        .SetWidth(45)
-                        .SetHeight(45)
-                        .SetFixedPosition(30, 340);
+                        .SetWidth(50)
+                        .SetHeight(50)
+                        .SetFixedPosition(30, 350);
 
         document.Add(logo);
 
@@ -139,16 +144,6 @@ public class GeneratePDFService : IGeneratePDFService
         // empty line
         document.Add(new Paragraph(""));
 
-        var fullName = multiplePass.Visitor?.FirstName + " " + multiplePass.Visitor?.LastName;
-        document.Add(createParagraphWithTab("Visitor Name: ", fullName));
-        document.Add(createParagraphWithTab("Phone No: ", multiplePass.Visitor?.Phone));
-        document.Add(createParagraphWithTab("Visitor Address: ", multiplePass.Visitor?.Address));
-
-        document.Add(createParagraphWithTab("From Date: ", multiplePass.FromDate.ToString("dd MMM yyyy")));
-        document.Add(createParagraphWithTab("End Date: ", multiplePass.TillDate.ToString("dd MMM yyyy")));
-        document.Add(createParagraphWithTab("Department: ", multiplePass.Department));
-        document.Add(createParagraphWithTab("Purpose: ", multiplePass.Purpose));
-
         // Adding visitor image to the pdf
         var visitorImageUrl = System.IO.Path.Combine(
                 _appEnvironment.WebRootPath,
@@ -158,9 +153,19 @@ public class GeneratePDFService : IGeneratePDFService
         Image visitorImage = new Image(ImageDataFactory.Create(visitorImageUrl))
                         .SetWidth(120)
                         .SetHeight(110)
-                        .SetFixedPosition(440, 190);
+                        .SetFixedPosition(440, 215);
 
         document.Add(visitorImage);
+
+        var fullName = multiplePass.Visitor?.FirstName + " " + multiplePass.Visitor?.LastName;
+        document.Add(createParagraphWithTab("Visitor Name: ", fullName));
+        document.Add(createParagraphWithTab("Phone No: ", multiplePass.Visitor?.Phone));
+        
+        document.Add(createParagraphWithTab("From Date: ", multiplePass.FromDate.ToString("dd MMM yyyy")));
+        document.Add(createParagraphWithTab("End Date: ", multiplePass.TillDate.ToString("dd MMM yyyy")));
+        document.Add(createParagraphWithTab("Department: ", multiplePass.Department));
+        document.Add(createParagraphWithTab("Purpose: ", multiplePass.Purpose));
+        document.Add(createParagraphWithTab("Visitor Address: ", multiplePass.Visitor?.Address));
 
         var signature = new Paragraph("Signature of HOD")
                             .SetTextAlignment(TextAlignment.RIGHT)
