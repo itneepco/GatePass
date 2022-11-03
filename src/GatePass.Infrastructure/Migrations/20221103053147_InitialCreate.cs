@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace GatePass.Infrastructure.Data.Migrations
+namespace GatePass.Infrastructure.Migrations
 {
     public partial class InitialCreate : Migration
     {
@@ -361,6 +361,12 @@ namespace GatePass.Infrastructure.Data.Migrations
                 name: "IX_SinglePasses_VisitorId",
                 table: "SinglePasses",
                 column: "VisitorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Visitors_Phone",
+                table: "Visitors",
+                column: "Phone",
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

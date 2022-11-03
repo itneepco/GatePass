@@ -3,6 +3,7 @@
 
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using MySqlConnector
 
 @inject IRepository<Visitor> _repo
 @inject IWebHostEnvironment _env
@@ -18,6 +19,7 @@
                     <MudTextField Label="Phone No"
                                   @bind-Value="model.Phone"
                                   Variant="Variant.Outlined"
+                                  Disabled="isEdit"
                                   For="@(() => model.Phone)" />
 
                     <MudTextField Label="First Name"
@@ -87,14 +89,17 @@
 
     Visitor? visitor;
     string imageData = string.Empty;
-
     string title = "Add Visitor";
+    bool isEdit;
 
     protected override async Task OnParametersSetAsync()
     {
+        isEdit = false;
+
         if (Guid.Parse(Id) != Guid.Empty)
         {
             title = "Edit Visitor";
+            isEdit = true;
 
             visitor = await _repo.GetByIdAsync(Guid.Parse(Id));
             if (visitor == null)
@@ -129,13 +134,22 @@
         var filePath = Path.Combine(_env.WebRootPath, "photos", fileName);
         await File.WriteAllBytesAsync(filePath, Convert.FromBase64String(imageData.Split(',')[1]));
 
-        if (Guid.Parse(Id) != Guid.Empty)
+        try
         {
-            await UpdateVisitor(fileName);
+            if (Guid.Parse(Id) != Guid.Empty)
+            {
+                await UpdateVisitor(fileName);
+            }
+            else
+            {
+                await CreateVisitor(fileName);
+            }
         }
-        else
+        catch (DbUpdateException e) 
+        when (e?.InnerException?.Message.ToLower().Contains("duplicate entry") ?? false)
         {
-            await CreateVisitor(fileName);
+            Console.WriteLine(e);
+            _snackbar.Add("Phone no is already registered with another visitor", Severity.Error);
         }
     }
 
@@ -168,7 +182,6 @@
 
         visitorDb.SetFirstName(model.FirstName);
         visitorDb.SetLastName(model.LastName);
-        visitorDb.SetPhone(model.Phone);
         visitorDb.SetIdentificationType(model.IdentificationType);
         visitorDb.SetIdentificationNo(model.IdentificationNo);
         visitorDb.SetAddress(model.Address);
