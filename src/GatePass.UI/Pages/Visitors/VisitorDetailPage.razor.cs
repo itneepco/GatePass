@@ -69,7 +69,7 @@ namespace GatePass.UI.Pages.Visitors
 
             var result = await dialog.Result;
 
-            if (!result.Cancelled)
+            if (!result.Canceled)
             {
                 ReloadSinglePassTable();
             }
@@ -92,7 +92,7 @@ namespace GatePass.UI.Pages.Visitors
 
             var result = await dialog.Result;
 
-            if (!result.Cancelled)
+            if (!result.Canceled)
             {
                 ReloadMultiPassTable();
             }

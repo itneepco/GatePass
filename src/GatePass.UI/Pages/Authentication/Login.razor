@@ -150,7 +150,7 @@
         var dialog = _dialog.Show<ResetPasswordModal>("Set new password", parameters, options);
 
         var result = await dialog.Result;
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             var token = await _userManager.GeneratePasswordResetTokenAsync(item);
             var state = await _userManager.ResetPasswordAsync(item, token, model.Password);

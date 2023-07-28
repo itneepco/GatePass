@@ -40,7 +40,7 @@
             <MudCheckBox Checked="@context.IsActive" ReadOnly Color="Color.Secondary" />
         </MudTd>
         <MudTd DataLabel="Actions">
-            <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+            <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
                 <MudMenuItem OnClick="() => EditUser(context)">Edit</MudMenuItem>
                 <MudMenuItem OnClick="() => ResetPassword(context)">Reset Password</MudMenuItem>
                 <MudMenuItem OnClick="() => DeleteUser(context)">Delete</MudMenuItem>
@@ -96,7 +96,7 @@
 
         var dialog = _dialog.Show<UserFormModal>("Add New User", options);
         var result = await dialog.Result;
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             ReloadTable();
         }
@@ -117,7 +117,7 @@
 
         var dialog = _dialog.Show<UserFormModal>("Update User", parameters, options);
         var result = await dialog.Result;
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             ReloadTable();
         }
@@ -132,7 +132,7 @@
         var dialog = _dialog.Show<ConfirmDialog>("Password Reset Confirmation", parameters);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             await _userManager.ResetPasswordAsync(user, token, "Pass@123");
@@ -150,7 +150,7 @@
         var dialog = _dialog.Show<ConfirmDialog>("Confirmation", parameters);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             await _userManager.DeleteAsync(user);
 

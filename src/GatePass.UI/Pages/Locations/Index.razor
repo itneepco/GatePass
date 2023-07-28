@@ -22,7 +22,7 @@
     <RowTemplate>
         <MudTd DataLabel="Location">@context.Name</MudTd>
         <MudTd DataLabel="Actions">
-            <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
+            <MudMenu Label="Actions" Variant="Variant.Filled" DisableElevation="true" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" IconColor="Color.Secondary">
                 <MudMenuItem OnClick="() => EditLocation(context)" >Edit</MudMenuItem>
             </MudMenu>
         </MudTd>
@@ -69,7 +69,7 @@
         var dialog = _dialog.Show<LocationFormModal>("Create New Location", options);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             await ReloadLocations();
         }
@@ -91,7 +91,7 @@
         var dialog = _dialog.Show<LocationFormModal>("Update Location", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             await ReloadLocations();
         }

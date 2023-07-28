@@ -68,13 +68,6 @@ public class DefaultInfrastructureModule : Module
       .As<IDomainEventDispatcher>()
       .InstancePerLifetimeScope();
 
-    builder.Register<ServiceFactory>(context =>
-    {
-      var c = context.Resolve<IComponentContext>();
-
-      return t => c.Resolve(t);
-    });
-
     var mediatrOpenTypes = new[]
     {
       typeof(IRequestHandler<,>),

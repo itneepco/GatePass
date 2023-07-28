@@ -4,7 +4,7 @@
 <MudMenu Label="Actions" 
          Variant="Variant.Filled" 
          DisableElevation="true" 
-         EndIcon="@Icons.Filled.KeyboardArrowDown" 
+         EndIcon="@Icons.Material.Filled.KeyboardArrowDown"
          IconColor="Color.Secondary">
 
     <MudMenuItem OnClick="_ => OnEditPass()">Edit Pass</MudMenuItem>
@@ -36,7 +36,7 @@
 
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             await OnPassUpdate.InvokeAsync();
         }

@@ -1,6 +1,6 @@
 ﻿<MudTooltip Arrow="true" Text="User Profile">
     <MudMenu AnchorOrigin="Origin.BottomRight"
-             Icon="@Icons.Filled.PermIdentity"
+             Icon="@Icons.Material.Filled.PermIdentity"
              Class="mx-1"
              Color="Color.Inherit"
              LockScroll="true"
@@ -70,7 +70,7 @@
 
         var dialog = _dialog.Show<LogoutConfirmation>("Logout Confirmation", parameters, options);
         var result = await dialog.Result;
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             await _authenticationService.Logout();
             _navManager.NavigateTo("/");

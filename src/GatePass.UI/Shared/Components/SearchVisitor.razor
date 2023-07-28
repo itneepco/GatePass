@@ -63,7 +63,7 @@
         var dialog = _dialog.Show<ConfirmDialog>("Confirmation", parameters);
         var result = await dialog.Result;
 
-        if(!result.Cancelled) {
+        if(!result.Canceled) {
             var id = Guid.Empty;
             _navManager.NavigateTo($"/visitors/upsert/{id}");
         }

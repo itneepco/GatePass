@@ -34,8 +34,8 @@
                     <MudImage Src="logo.png" Width="42" Height="42" Alt="Logo" Style="margin-right: 0.75rem" />
                     <MudText Typo="Typo.h5">Gate Pass</MudText>
                 </MudDrawerHeader>
-                <MudDivider />
-                <NavMenu/>
+                <MudDivider Class="flex-grow-0" />
+                <NavMenu />
             </MudDrawer>
 
             <MudMainContent>
@@ -44,7 +44,7 @@
                 </MudContainer>
             </MudMainContent>
 
-            <MudThemeManagerButton OnClick="@((e) => OpenThemeManager(true))" />
+            @*<MudThemeManagerButton OnClick="@((e) => OpenThemeManager(true))" />*@
             <MudThemeManager Open="_themeManagerOpen" OpenChanged="OpenThemeManager" Theme="_themeManager" ThemeChanged="UpdateTheme" />
 
         </Authorized>
